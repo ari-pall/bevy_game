@@ -24,7 +24,7 @@ exclude = [
 
 [profile]
 dev = {package."*" = {opt-level = 1}, opt-level = 1}
-release = {lto = true, codegen-units = 1}
+release = {lto = true, codegen-units = 1, opt-level = 3}
 # The profile that 'cargo dist' will build with
 dist = {inherits = "release", lto = "thin"}
 

@@ -44,17 +44,18 @@ pub fn main() {
   // dungeon::main();
   App::new().init_resource::<state::StateStuff>()
             .add_plugins((
+    assetstuff::AssetStuffPlugin,
     DefaultPlugins.set(ImagePlugin::default_nearest()),
     ThirdPersonCameraPlugin,
     // Aery,
     bevy_sprite3d::Sprite3dPlugin,
-    assetstuff::AssetStuffPlugin,
     bevy_xpbd_3d::prelude::PhysicsPlugins::default(),
     input::MyInputPlugin, // game::game_plugin,
                           // input::keylogger,
                           // input::get_pressed_keys_plugin,
                           // tests::tests_plugin
   ))
+            .add_systems(Startup, setup::setup)
             .add_systems(Update,
                          (update::gib_sprite_bundle,
                           update::sprites_face_camera,
@@ -62,7 +63,6 @@ pub fn main() {
                           update::item_pick_up,
                           bevy::window::close_on_esc,
                           jumpy_penguin::segment_path_motion))
-            .add_systems(Startup, setup::setup)
             .run();
   // .insert_resource(ClearColor(Color::SALMON))
   // .insert_resource(game::generate_level())
@@ -73,4 +73,4 @@ pub fn main() {
   // .add_startup_system(load_lunar_lander)
 }
 
-// trunk build --release --public-url "solarsystem_bevy"
+// trunk build --release --public-url "bevy_game"

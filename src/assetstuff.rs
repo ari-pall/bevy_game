@@ -31,8 +31,8 @@ fn colorful_texture() -> Image {
                              depth_or_array_layers: 1 },
                   TextureDimension::D2,
                   map(|i| [255, 121, 236, 102, 159, 198][i % 6],
-                      0..(texture_size * texture_size * 4) as usize).collect::<Vec<u8>>()
-                                                                    .as_slice(),
+                      0..((texture_size * texture_size * 4) as usize)).collect::<Vec<u8>>()
+                                                                      .as_slice(),
                   TextureFormat::Rgba8UnormSrgb)
 }
 #[derive(Resource, Default)]
