@@ -27,7 +27,7 @@ html, body {
 <link rel="modulepreload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-cef99ff620c2a0f4.js"></head>
     <body style="background-color:#333333;">
         <!-- <link data-trunk rel="inline" href="build/web/sound.js"/> -->
-        <div class="game-container" onclick="document.getElementById('game-container').requestFullscreen()">
+        <div id="fullscreenelement" class="game-container" onclick="document.getElementById('fullscreenelement').requestFullscreen()">
             <div class="lds-dual-ring"></div>
             <canvas id="bevy">
                 Javascript and support for canvas is required
