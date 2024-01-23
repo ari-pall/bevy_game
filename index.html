@@ -17,7 +17,7 @@ html, body {
     <body style="background-color:#333333;">
         <!-- <link data-trunk rel="inline" href="build/web/sound.js"/> -->
         <div id="fullscreenelement" class="game-container" onclick="
-if document.fullscreenElement {
+if (document.fullscreenElement) {
 document.getElementById('fullscreenelement').requestPointerLock();
 } else {
 document.getElementById('fullscreenelement').requestFullscreen();
