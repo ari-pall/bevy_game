@@ -44,8 +44,8 @@ pub fn main() {
   // dungeon::main();
   App::new().init_resource::<state::StateStuff>()
             .add_plugins((
-    assetstuff::AssetStuffPlugin,
     DefaultPlugins.set(ImagePlugin::default_nearest()),
+    assetstuff::AssetStuffPlugin,
     ThirdPersonCameraPlugin,
     // Aery,
     bevy_sprite3d::Sprite3dPlugin,
