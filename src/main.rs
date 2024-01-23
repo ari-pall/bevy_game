@@ -44,7 +44,22 @@ pub fn main() {
   // dungeon::main();
   App::new().init_resource::<state::StateStuff>()
             .add_plugins((
-    DefaultPlugins.set(ImagePlugin::default_nearest()),
+    DefaultPlugins.set(ImagePlugin::default_nearest())
+                  .set(WindowPlugin {
+                    primary_window: Some(Window {
+                      // resolution:window::WindowResolution::new(1080.0,1080.0*3./4.),
+                      cursor: window::Cursor{
+                        visible: false,
+                        grab_mode: window::CursorGrabMode::Confined ,..default()},
+                      present_mode: window::PresentMode::AutoNoVsync,
+                      mode: window::WindowMode::BorderlessFullscreen,
+                      title: "bevy_game".to_string(),
+                      canvas: Some("#bevy".to_string()),
+                      fit_canvas_to_parent: true,
+                      // prevent_default_event_handling: todo!(),
+                       ..default()}),
+                    ..default()
+                  }),
     assetstuff::AssetStuffPlugin,
     ThirdPersonCameraPlugin,
     // Aery,
