@@ -81,18 +81,11 @@ pub fn sprites_face_camera(camq: Query<&GlobalTransform, With<Camera>>,
                            mut spriteq: Query<(&mut Transform, &GlobalTransform),
                                  (With<Sprite3dComponent>, Without<Camera>)>) {
   if let Ok(cam_globaltransform) = camq.get_single() {
-    for (mut transform, globaltransform) in spriteq.iter_mut() {
-      // let transform_diff_norm =
-      //   (globaltransform.translation() - cam_transform.translation).normalize_or_zero();
-      // let forward = cam_transform.forward();
-      // let lerped = forward.lerp(transform_diff_norm, 0.5);
-      // let dir = Vec3 { y: 0.0,
-      //                  ..(globaltransform.translation()
-      //                     - (player_transform.translation - cam_transform.forward())) };
+    for (mut sprite_transform, sprite_globaltransform) in &mut spriteq {
       let dir = Vec3 { y: 0.0,
-                       ..(globaltransform.translation()
+                       ..(sprite_globaltransform.translation()
                           - cam_globaltransform.translation()) };
-      transform.look_to(dir, Vec3::Y);
+      sprite_transform.look_to(dir, Vec3::Y);
     }
   }
 }
