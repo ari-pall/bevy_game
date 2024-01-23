@@ -22,15 +22,16 @@ html, body {
     <!-- target/wasm-bindgen/release/bevy_game-b612f9500708e2d9_bg.wasm -->
     <!-- target/wasm-bindgen/release/bevy_game-ea1f249f5824fefb.js -->
     <!-- target/wasm-bindgen/release/bevy_game-16de17ae4fd8a86c.js -->
-<link rel="preload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-16de17ae4fd8a86c_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-16de17ae4fd8a86c.js"></head>
+    <!-- target/wasm-bindgen/release/bevy_game-cef99ff620c2a0f4.js -->
+<link rel="preload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-cef99ff620c2a0f4_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
+<link rel="modulepreload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-cef99ff620c2a0f4.js"></head>
     <body style="background-color:#333333;">
         <!-- <link data-trunk rel="inline" href="build/web/sound.js"/> -->
-        <div class="game-container">
+        <div class="game-container" onclick="document.getElementById('game-container').requestFullscreen()">
             <div class="lds-dual-ring"></div>
             <canvas id="bevy">
                 Javascript and support for canvas is required
             </canvas>
         </div>
 
-<script type="module">import init from '/bevy_game/target/wasm-bindgen/release/bevy_game-16de17ae4fd8a86c.js';init('/bevy_game/target/wasm-bindgen/release/bevy_game-16de17ae4fd8a86c_bg.wasm');</script></body></html>
+<script type="module">import init from '/bevy_game/target/wasm-bindgen/release/bevy_game-cef99ff620c2a0f4.js';init('/bevy_game/target/wasm-bindgen/release/bevy_game-cef99ff620c2a0f4_bg.wasm');</script></body></html>

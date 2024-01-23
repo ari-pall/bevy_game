@@ -49,10 +49,11 @@ pub fn main() {
                     primary_window: Some(Window {
                       // resolution:window::WindowResolution::new(1080.0,1080.0*3./4.),
                       cursor: window::Cursor{
+                        // grab_mode: window::CursorGrabMode::Confined ,
                         visible: false,
-                        grab_mode: window::CursorGrabMode::Confined ,..default()},
-                      present_mode: window::PresentMode::AutoNoVsync,
+                        ..default()},
                       mode: window::WindowMode::BorderlessFullscreen,
+                      present_mode: window::PresentMode::AutoNoVsync,
                       title: "bevy_game".to_string(),
                       canvas: Some("#bevy".to_string()),
                       fit_canvas_to_parent: true,
