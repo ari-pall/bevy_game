@@ -16,7 +16,19 @@ html, body {
 <link rel="modulepreload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-cef99ff620c2a0f4.js"></head>
     <body style="background-color:#333333;">
         <!-- <link data-trunk rel="inline" href="build/web/sound.js"/> -->
-        <div id="fullscreenelement" class="game-container" onclick="if (document.fullscreenElement) { document.getElementById('fullscreenelement').requestPointerLock(); } else { document.getElementById('fullscreenelement').requestFullscreen(); } ">
+
+<script>
+ function clickfullscreenelement() {
+     let fullscreenElement = document.getElementById('fullscreenElement');
+     if (document.fullscreenElement) {
+         fullscreenelement.requestPointerLock();
+     } else {
+         fullscreenelement.requestFullscreen();
+     }
+ }
+</script>
+
+        <div id="fullscreenelement" class="game-container" onclick="clickfullscreenelement()">
             <div class="lds-dual-ring"></div>
             <canvas id="bevy">
                 Javascript and support for canvas is required
