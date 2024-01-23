@@ -93,10 +93,12 @@ pub fn gib_sprite_bundle(mut sprite_3d_params: Sprite3dParams,
                          mut c: Commands,
                          q: Query<(Entity, &GibSpriteBundle)>) {
   for (e, GibSpriteBundle(s)) in &q {
-    c.entity(e)
-     .remove::<GibSpriteBundle>()
-     .insert(Sprite3d { image: s.image.clone(),
-                        ..*s }.bundle(&mut sprite_3d_params));
+    if sprite_3d_params.images.contains(&s.image) {
+      c.entity(e)
+       .remove::<GibSpriteBundle>()
+       .insert(Sprite3d { image: s.image.clone(),
+                          ..*s }.bundle(&mut sprite_3d_params));
+    }
   }
 }
 const PICKUPDISTANCE: f32 = 0.6;
