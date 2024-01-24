@@ -169,7 +169,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                 transform,
                                                 pixels_per_metre: 12.0,
                                                 ..default() }))),
-      'C' => spawn!((RigidBody::Static,
+      'C' => spawn!((// RigidBody::Static,
                      ItemPickUp::SpeedBoost,
                      // Collider::capsule(0.8, 0.3),
                      GibSpriteBundle(Sprite3d { image: amah.coffee.clone(),

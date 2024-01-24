@@ -73,6 +73,8 @@ pub fn main() {
                           // input::get_pressed_keys_plugin,
                           // tests::tests_plugin
   ))
+
+        .insert_resource(bevy_xpbd_3d::resources::SubstepCount(2))
             .add_systems(Startup, setup::setup)
             .add_systems(Update,
                          (update::gib_sprite_bundle,
