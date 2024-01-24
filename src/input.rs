@@ -1,3 +1,5 @@
+use {bevy::input::mouse::MouseButtonInput, bevy_third_person_camera::ThirdPersonCamera};
+
 use {crate::{assetstuff::AllMyAssetHandles, components::Player},
      bevy::{gltf::Gltf,
             prelude::{Input, KeyCode, Res, *}},
@@ -15,8 +17,10 @@ pub struct JumpAction;
 fn keyboard_input(mut movement_event_writer: EventWriter<MoveHorizontallyAction>,
                   mut jump_event_writer: EventWriter<JumpAction>,
                   keyboard_input: Res<Input<KeyCode>>,
-                  _gltfs: Res<Assets<Gltf>>,
-                  _amah: Res<AllMyAssetHandles>,
+                  mouse_button_input: Res<Input<MouseButton>>,
+                  mut cam_q: Query<&mut ThirdPersonCamera>,
+                  // _gltfs: Res<Assets<Gltf>>,
+                  // _amah: Res<AllMyAssetHandles>,
                   q: Query<(Has<Rotation>,
                          Has<ShapeCaster>,
                          Has<ShapeHits>,
@@ -24,6 +28,11 @@ fn keyboard_input(mut movement_event_writer: EventWriter<MoveHorizontallyAction>
                          Has<ExternalForce>,
                          Has<ExternalImpulse>),
                         With<Player>>) {
+  if let Ok(mut cam) = cam_q.get_single_mut() {
+    if mouse_button_input.just_pressed(MouseButton::Left) {
+      cam.cursor_lock_active = !cam.cursor_lock_active;
+    }
+  }
   if keyboard_input.just_pressed(KeyCode::G) {
     debug_println(&q);
     // debug_println(gltfs.get(amah.character_controller_demo_scene_gltf.clone())

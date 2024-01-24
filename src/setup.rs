@@ -90,7 +90,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                            ..default() },
            ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
                                cursor_lock_toggle_enabled: true,
-                               cursor_lock_active: true,
+                               cursor_lock_active: false,
                                mouse_sensitivity: 1.7,
                                zoom: bevy_third_person_camera::Zoom::new(1.2, 8.0),
                                zoom_sensitivity: 0.5,

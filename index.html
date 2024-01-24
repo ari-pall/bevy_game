@@ -13,26 +13,27 @@ html, body {
          <link rel="icon" href="icon.ico"> -->
     <!-- <link data-trunk rel="inline" href="build/web/styles.css"/> -->
     <!-- target/wasm-bindgen/release/bevy_game-.js -->
-<link rel="preload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-76166de0e544892d_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-76166de0e544892d.js"></head>
+    <!-- target/wasm-bindgen/release/bevy_game-38103a584ba622b8.js -->
+<link rel="preload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-38103a584ba622b8_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
+<link rel="modulepreload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-38103a584ba622b8.js"></head>
     <body style="background-color:#333333;">
         <!-- <link data-trunk rel="inline" href="build/web/sound.js"/> -->
 
-<script>
- function clickfullscreenelement() {
-      document.getElementById('fullscreenelement').requestFullscreen();
-     // if (!(document.fullscreenElement)) {
-     //     fullscreenelement.requestFullscreen();
-     //     // fullscreenelement.requestPointerLock();
-     // }
- }
-</script>
+        <!-- <script>
+             function clickfullscreenelement() {
+             document.getElementById('fullscreenelement').requestFullscreen();
+             // if (!(document.fullscreenElement)) {
+             //     fullscreenelement.requestFullscreen();
+             //     // fullscreenelement.requestPointerLock();
+             // }
+             }
+             </script> -->
 
-        <div id="fullscreenelement" class="game-container" onclick="clickfullscreenelement()">
+        <div id="fullscreenelement" class="game-container" onclick="document.getElementById('fullscreenelement').requestFullscreen()">
             <div class="lds-dual-ring"></div>
             <canvas id="bevy">
                 Javascript and support for canvas is required
             </canvas>
         </div>
 
-<script type="module">import init from '/bevy_game/target/wasm-bindgen/release/bevy_game-76166de0e544892d.js';init('/bevy_game/target/wasm-bindgen/release/bevy_game-76166de0e544892d_bg.wasm');</script></body></html>
+<script type="module">import init from '/bevy_game/target/wasm-bindgen/release/bevy_game-38103a584ba622b8.js';init('/bevy_game/target/wasm-bindgen/release/bevy_game-38103a584ba622b8_bg.wasm');</script></body></html>
