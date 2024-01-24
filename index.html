@@ -12,19 +12,19 @@ html, body {
          <link data-trunk rel="copy-file" href="build/windows/icon.ico"/>
          <link rel="icon" href="icon.ico"> -->
     <!-- <link data-trunk rel="inline" href="build/web/styles.css"/> -->
-<link rel="preload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-cef99ff620c2a0f4_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-cef99ff620c2a0f4.js"></head>
+    <!-- target/wasm-bindgen/release/bevy_game-.js -->
+<link rel="preload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-76166de0e544892d_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
+<link rel="modulepreload" href="/bevy_game/target/wasm-bindgen/release/bevy_game-76166de0e544892d.js"></head>
     <body style="background-color:#333333;">
         <!-- <link data-trunk rel="inline" href="build/web/sound.js"/> -->
 
 <script>
  function clickfullscreenelement() {
-     let fullscreenElement = document.getElementById('fullscreenElement');
-     if (document.fullscreenElement) {
-         fullscreenelement.requestPointerLock();
-     } else {
-         fullscreenelement.requestFullscreen();
-     }
+      document.getElementById('fullscreenelement').requestFullscreen();
+     // if (!(document.fullscreenElement)) {
+     //     fullscreenelement.requestFullscreen();
+     //     // fullscreenelement.requestPointerLock();
+     // }
  }
 </script>
 
@@ -35,4 +35,4 @@ html, body {
             </canvas>
         </div>
 
-<script type="module">import init from '/bevy_game/target/wasm-bindgen/release/bevy_game-cef99ff620c2a0f4.js';init('/bevy_game/target/wasm-bindgen/release/bevy_game-cef99ff620c2a0f4_bg.wasm');</script></body></html>
+<script type="module">import init from '/bevy_game/target/wasm-bindgen/release/bevy_game-76166de0e544892d.js';init('/bevy_game/target/wasm-bindgen/release/bevy_game-76166de0e544892d_bg.wasm');</script></body></html>

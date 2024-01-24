@@ -1,7 +1,7 @@
 use {crate::{assetstuff::AllMyAssetHandles,
              components::{GibSpriteBundle, ItemPickUp, Player},
              jumpy_penguin::SegmentPathMotion},
-     bevy::{math::vec3, prelude::*},
+     bevy::{core_pipeline, math::vec3, prelude::*},
      bevy_sprite3d::Sprite3d,
      bevy_third_person_camera::{ThirdPersonCamera, ThirdPersonCameraTarget},
      bevy_xpbd_3d::prelude::*,
@@ -68,17 +68,6 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                  transform: Transform::from_translation(center),
                  ..default() })
   };
-  // let iceberg = |mut spm: SegmentPathMotion| {
-  //   (RigidBody::Kinematic,
-  //    Friction::default(),
-  //    PbrBundle { mesh: amah.flatbox.clone(),
-  //                material: amah.snow_material.clone(),
-  //                transform: Transform::from_translation(Vec3::ZERO),
-  //                ..default() },
-  //    spm,
-  //    AsyncCollider(ComputedCollider::ConvexHull));
-  // };
-  // spawn!(iceberg(SegmentPathMotion::circular_motion(vec3(0.0, -6.0, 0.0), 15.0, 1.3)));
   spawn!(iceberg(vec3(0.0, -6.0, 0.0), 1.3, amah.as_ref()));
   spawn!(make_iceberg(vec3(0.0, -6.0, 0.0), 12.0, 1.3));
   spawn!(make_iceberg(vec3(0.0, -6.0, 0.0), 9.0, 1.3));
@@ -88,19 +77,23 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                     transform: Transform::from_xyz(-30.0, 0.0, -40.0),
                                     pixels_per_metre: 1.5,
                                     ..default() }));
-  spawn!(bevy::core_pipeline::tonemapping::Tonemapping::AcesFitted);
   spawn!((RigidBody::Static,
           AsyncCollider(ComputedCollider::ConvexHull),
           PbrBundle { mesh: amah.planesize50.clone(),
                       material: amah.water_material.clone(),
                       transform: Transform::from_xyz(0.0, -6.0, 0.0),
                       ..default() }));
+  // spawn!(bevy::core_pipeline::tonemapping::Tonemapping::);
   // Camera
-  c.spawn((Camera3dBundle::default(),
+  c.spawn((Camera3dBundle{ camera: Camera{hdr: true,..default()},
+                           tonemapping: core_pipeline::tonemapping::Tonemapping::Reinhard,
+                           ..default() },
            ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
+                               cursor_lock_toggle_enabled: true,
+                               cursor_lock_active: true,
                                mouse_sensitivity: 1.7,
                                zoom: bevy_third_person_camera::Zoom::new(1.2, 8.0),
-                               zoom_sensitivity: 1.1,
+                               zoom_sensitivity: 0.5,
                                ..default() }))
    // .insert(bevy::pbr::ScreenSpaceAmbientOcclusionBundle::default())
    // .insert(bevy::core_pipeline::experimental::taa::TemporalAntiAliasBundle::default())

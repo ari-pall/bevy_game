@@ -5,6 +5,8 @@
 // #![feature(type_alias_impl_trait)]
 #![allow(unused_mut)]
 
+use bevy::render::RenderPlugin;
+
 use {bevy::{prelude::*, window},
      bevy_third_person_camera::ThirdPersonCameraPlugin};
 
