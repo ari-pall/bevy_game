@@ -1,3 +1,5 @@
+use crate::{assetstuff::AllMyAssetHandles, components::PlayerFollower};
+
 use {crate::{components::{GibSpriteBundle, ItemPickUp, Player},
              input::*},
      bevy::prelude::*,
@@ -98,6 +100,52 @@ pub fn gib_sprite_bundle(mut sprite_3d_params: Sprite3dParams,
        .remove::<GibSpriteBundle>()
        .insert(Sprite3d { image: s.image.clone(),
                           ..*s }.bundle(&mut sprite_3d_params));
+    }
+  }
+}
+pub fn spawn_mushroom_man(playerq: Query<&Transform, With<Player>>,
+                          keyboard_input: Res<Input<KeyCode>>,
+                          mut c: Commands,
+                          amah: Res<AllMyAssetHandles>) {
+  if let Ok(player_transform) = playerq.get_single() {
+    if keyboard_input.just_pressed(KeyCode::Z) {
+      let collider = Collider::capsule(0.8, 0.2);
+      c.spawn((RigidBody::Dynamic,
+               PlayerFollower,
+               MassPropertiesBundle::new_computed(&collider, 3.4),
+               Friction::new(3.9),
+               LockedAxes::ROTATION_LOCKED.unlock_rotation_y(),
+               SpatialBundle::from_transform(*player_transform),
+               collider,
+               GibSpriteBundle(Sprite3d { image: amah.mushroom_man.clone(),
+                                          transform: *player_transform,
+                                          pixels_per_metre: 23.0,
+                                          ..default() })));
+
+      // spawn_with_child(&mut c,
+      //                  (RigidBody::Dynamic,
+      //                   MassPropertiesBundle::new_computed(&collider, 3.4),
+      //                   collider),
+      //                  GibSpriteBundle(Sprite3d { image: amah.mushroom_man.clone(),
+      //                                             transform: *player_transform,
+      //                                             pixels_per_metre: 12.0,
+      //                                             ..default() }));
+    }
+  }
+}
+pub fn player_follower(mut followerq: Query<(&mut ExternalForce,
+                              &Transform,
+                              &LinearVelocity),
+                             With<PlayerFollower>>,
+                       mut playerq: Query<&Transform, With<Player>>) {
+  if let Ok(player_transform) = playerq.get_single() {
+    for (mut follower_force, follower_transform, follower_linvel) in &mut followerq {
+      // let relpos = (player_transform.translation - follower_transform.translation);
+      // let dist = relpos.length();
+      follower_force.persistent = false;
+      follower_force.apply_force((player_transform.translation
+                                  - follower_transform.translation)
+                                 * 0.8);
     }
   }
 }

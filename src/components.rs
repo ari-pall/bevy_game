@@ -78,6 +78,8 @@ pub struct Fire {
 }
 
 #[derive(Component)]
+pub struct PlayerFollower;
+#[derive(Component)]
 pub struct GibSpriteBundle(pub Sprite3d);
 
 // use crate::gamething::Dir;

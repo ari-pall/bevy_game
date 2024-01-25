@@ -81,6 +81,8 @@ pub fn main() {
                           update::sprites_face_camera,
                           update::player_movement,
                           update::item_pick_up,
+                          update::spawn_mushroom_man,
+                          update::player_follower,
                           bevy::window::close_on_esc,
                           jumpy_penguin::segment_path_motion))
             .run();
@@ -94,4 +96,5 @@ pub fn main() {
 }
 
 // trunk build --release --public-url "bevy_game" --filehash false
+
 // trunk serve

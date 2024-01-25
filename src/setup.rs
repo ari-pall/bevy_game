@@ -40,6 +40,11 @@ pub fn iceberg(center: Vec3, speed: f32, amah: &AllMyAssetHandles) -> impl Bundl
                transform: Transform::from_translation(center),
                ..default() })
 }
+pub fn spawn_with_child(c: &mut Commands, a: impl Bundle, b: impl Bundle) {
+  c.spawn(a).with_children(|x| {
+              x.spawn(b);
+            });
+}
 pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   macro_rules! spawn {
     ($bundle:expr) => {{
@@ -112,11 +117,6 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                                  })
                                                            })
                                 });
-  fn spawn_with_child(c: &mut Commands, a: impl Bundle, b: impl Bundle) {
-    c.spawn(a).with_children(|x| {
-                x.spawn(b);
-              });
-  }
   for ([x, y, z], tile) in level {
     let transform =
       Transform::from_translation(Vec3::from_slice(&[x, y, z].map(|n| n as f32)));

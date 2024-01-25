@@ -62,6 +62,7 @@ pub struct AllMyAssetHandles {
   pub funky_image: Handle<Image>,
   pub colorful_image: Handle<Image>,
   pub penguin_image: Handle<Image>,
+  pub mushroom_man: Handle<Image>,
   pub tree: Handle<Image>,
   pub iceberg: Handle<Image>,
   pub coffee: Handle<Image>,
@@ -112,6 +113,7 @@ impl Plugin for AssetStuffPlugin {
       tree, "tree.png"
       snow_image, "snow.png"
       penguin_image, "penguin.png"
+      mushroom_man, "mushroom_man.png"
       wat, "wat.glb"
       character_controller_demo_scene_gltf, "character_controller_demo.glb"
     }
