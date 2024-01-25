@@ -164,7 +164,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                     ..default() }))
       }
       't' => spawn!((RigidBody::Static,
-                     Collider::capsule(0.8, 0.3),
+                     Collider::capsule(0.8, 0.2),
                      GibSpriteBundle(Sprite3d { image: amah.tree.clone(),
                                                 transform,
                                                 pixels_per_metre: 12.0,
@@ -184,6 +184,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                    ..default() })),
       'l' => spawn!(PointLightBundle { transform,
                                        point_light: PointLight { intensity: 1500.0,
+                                                                 radius: 0.7,
                                                                  range: 50.0,
                                                                  shadows_enabled:
                                                                    true,

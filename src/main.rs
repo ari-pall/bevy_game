@@ -50,10 +50,10 @@ pub fn main() {
                   .set(WindowPlugin {
                     primary_window: Some(Window {
                       // resolution:window::WindowResolution::new(1080.0,1080.0*3./4.),
-                      cursor: window::Cursor{
-                        // grab_mode: window::CursorGrabMode::Confined ,
-                        visible: false,
-                        ..default()},
+                      // cursor: window::Cursor{
+                      //   // grab_mode: window::CursorGrabMode::Confined ,
+                      //   visible: false,
+                      //   ..default()},
                       mode: window::WindowMode::BorderlessFullscreen,
                       present_mode: window::PresentMode::AutoNoVsync,
                       title: "bevy_game".to_string(),
@@ -93,4 +93,5 @@ pub fn main() {
   // .add_startup_system(load_lunar_lander)
 }
 
-// trunk build --release --public-url "bevy_game"
+// trunk build --release --public-url "bevy_game" --filehash false
+// trunk serve
