@@ -1,3 +1,5 @@
+use bevy_xpbd_3d::parry::{math::AngularInertia, na::givens::GivensRotation};
+
 use crate::{assetstuff::AllMyAssetHandles, components::PlayerFollower};
 
 use {crate::{components::{GibSpriteBundle, ItemPickUp, Player},
@@ -82,6 +84,7 @@ pub fn player_movement(collisions: Res<Collisions>,
 pub fn sprites_face_camera(camq: Query<&GlobalTransform, With<Camera>>,
                            mut spriteq: Query<(&mut Transform, &GlobalTransform),
                                  (With<Sprite3dComponent>, Without<Camera>)>) {
+  // AngularInertia
   if let Ok(cam_globaltransform) = camq.get_single() {
     for (mut sprite_transform, sprite_globaltransform) in &mut spriteq {
       let dir = Vec3 { y: 0.0,

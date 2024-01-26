@@ -56,6 +56,14 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                        });
     }};
   }
+  let text_style = TextStyle { font_size: 30.0,
+                               ..default() };
+  spawn!(TextBundle::from(TextSection::new("z: ".to_string(), text_style.clone())));
+  spawn!(ImageBundle { style: Style { width: Val::Percent(5.0),
+                                      height: Val::Percent(7.0),
+                                      ..default() },
+                       image: UiImage::from(amah.mushroom_man.clone()),
+                       ..default() });
   spawn!(PointLightBundle { transform: Transform::from_xyz(0.0, -4.0, 0.0),
                             point_light: PointLight { intensity: 2300.0,
                                                       range: 100.0,

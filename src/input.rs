@@ -67,7 +67,7 @@ impl Plugin for MyInputPlugin {
   fn build(&self, app: &mut App) {
     app.add_event::<MoveHorizontallyAction>()
        .add_event::<JumpAction>()
-       .add_systems(Update, (keyboard_input,).chain());
+       .add_systems(Update, keyboard_input);
   }
 }
 
