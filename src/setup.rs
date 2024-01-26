@@ -59,7 +59,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   println!("iii");
 
   // 2d Camera
-  c.spawn(Camera2dBundle::default());
+  spawn!(Camera2dBundle::default());
   let text_style = TextStyle { font_size: 30.0,
                                ..default() };
   spawn!(TextBundle::from(TextSection::new("z: ".to_string(), text_style.clone())));
