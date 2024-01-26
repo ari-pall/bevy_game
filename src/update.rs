@@ -81,9 +81,10 @@ pub fn player_movement(collisions: Res<Collisions>,
     }
   }
 }
-pub fn sprites_face_camera(camq: Query<&GlobalTransform, With<Camera>>,
+pub fn sprites_face_camera(camq: Query<&GlobalTransform, With<Camera3d>>,
                            mut spriteq: Query<(&mut Transform, &GlobalTransform),
-                                 (With<Sprite3dComponent>, Without<Camera>)>) {
+                                 (With<Sprite3dComponent>,
+                                  Without<Camera3d>)>) {
   // AngularInertia
   if let Ok(cam_globaltransform) = camq.get_single() {
     for (mut sprite_transform, sprite_globaltransform) in &mut spriteq {
