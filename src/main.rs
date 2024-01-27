@@ -5,8 +5,6 @@
 // #![feature(type_alias_impl_trait)]
 #![allow(unused_mut)]
 
-use bevy::render::RenderPlugin;
-
 use {bevy::{prelude::*, window},
      bevy_third_person_camera::ThirdPersonCameraPlugin};
 
@@ -41,9 +39,6 @@ pub mod update;
 // }
 #[bevy_main]
 pub fn main() {
-  // Mesh::
-  // let b: Box<dyn Bundle> = Box::new(components::Player);
-  // dungeon::main();
   App::new().init_resource::<state::StateStuff>()
             .add_plugins((
     DefaultPlugins.set(ImagePlugin::default_nearest())

@@ -21,6 +21,7 @@ fn keyboard_input(mut movement_event_writer: EventWriter<MoveHorizontallyAction>
                   mut cam_q: Query<&mut ThirdPersonCamera>,
                   // _gltfs: Res<Assets<Gltf>>,
                   // _amah: Res<AllMyAssetHandles>,
+                  playerq: Query<&Transform, With<Player>>,
                   q: Query<(Has<Rotation>,
                          Has<ShapeCaster>,
                          Has<ShapeHits>,
@@ -28,6 +29,9 @@ fn keyboard_input(mut movement_event_writer: EventWriter<MoveHorizontallyAction>
                          Has<ExternalForce>,
                          Has<ExternalImpulse>),
                         With<Player>>) {
+  if keyboard_input.just_pressed(KeyCode::L) {
+    playerq.for_each(debug_println);
+  }
   if let Ok(mut cam) = cam_q.get_single_mut() {
     if mouse_button_input.just_pressed(MouseButton::Left) {
       cam.cursor_lock_active = !cam.cursor_lock_active;

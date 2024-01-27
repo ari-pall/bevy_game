@@ -7,16 +7,6 @@ use {crate::{assetstuff::AllMyAssetHandles,
      bevy_xpbd_3d::prelude::*,
      rust_utils::comment};
 
-// pub fn gib_sprite_bundle(mut sprite_3d_params: Sprite3dParams,
-//                          mut c: Commands,
-//                          q: Query<(Entity, &GibSpriteBundle)>) {
-//   for (e, GibSpriteBundle(s)) in &q {
-//     c.entity(e)
-//      .remove::<GibSpriteBundle>()
-//      .insert(Sprite3d { image: s.image.clone(),
-//                         ..*s }.bundle(&mut sprite_3d_params));
-//   }
-// }
 // // Environment (see `async_colliders` example for creating colliders from scenes)
 // c.spawn((
 //   SceneBundle {
@@ -30,16 +20,16 @@ use {crate::{assetstuff::AllMyAssetHandles,
 //   ))),
 //   RigidBody::Static,
 // ));
-pub fn iceberg(center: Vec3, speed: f32, amah: &AllMyAssetHandles) -> impl Bundle {
-  (RigidBody::Kinematic,
-   Friction::default(),
-   SegmentPathMotion::circular_motion(center, 15.0, speed),
-   AsyncCollider(ComputedCollider::ConvexHull),
-   PbrBundle { mesh: amah.flatbox.clone(),
-               material: amah.snow_material.clone(),
-               transform: Transform::from_translation(center),
-               ..default() })
-}
+// pub fn iceberg(center: Vec3, speed: f32, amah: &AllMyAssetHandles) -> impl Bundle {
+//   (RigidBody::Kinematic,
+//    Friction::default(),
+//    SegmentPathMotion::circular_motion(center, 15.0, speed),
+//    AsyncCollider(ComputedCollider::ConvexHull),
+//    PbrBundle { mesh: amah.flatbox.clone(),
+//                material: amah.snow_material.clone(),
+//                transform: Transform::from_translation(center),
+//                ..default() })
+// }
 pub fn spawn_with_child(c: &mut Commands, a: impl Bundle, b: impl Bundle) {
   c.spawn(a).with_children(|x| {
               x.spawn(b);
@@ -56,10 +46,6 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                        });
     }};
   }
-  println!("iii");
-
-  // 2d Camera
-  spawn!(Camera2dBundle::default());
   let text_style = TextStyle { font_size: 30.0,
                                ..default() };
   spawn!(TextBundle::from(TextSection::new("z: ".to_string(), text_style.clone())));
@@ -75,21 +61,32 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                       ..default() },
                             ..default() });
 
-  let make_iceberg = |center: Vec3, radius: f32, speed: f32| {
+  let iceberg = |mut spm: SegmentPathMotion| {
     (RigidBody::Kinematic,
      Friction::default(),
-     SegmentPathMotion::circular_motion(center, radius, speed),
      AsyncCollider(ComputedCollider::ConvexHull),
      PbrBundle { mesh: amah.flatbox.clone(),
                  material: amah.snow_material.clone(),
-                 transform: Transform::from_translation(center),
-                 ..default() })
+                 transform: Transform::from_translation(spm.dest()),
+                 ..default() },
+     spm)
   };
-  spawn!(iceberg(vec3(0.0, -6.0, 0.0), 1.3, amah.as_ref()));
-  spawn!(make_iceberg(vec3(0.0, -6.0, 0.0), 12.0, 1.3));
-  spawn!(make_iceberg(vec3(0.0, -6.0, 0.0), 9.0, 1.3));
-  spawn!(make_iceberg(vec3(0.0, -6.0, 0.0), 6.0, 1.3));
-  spawn!(make_iceberg(vec3(0.0, -6.0, 0.0), 0.0, 1.3));
+  spawn!(iceberg(SegmentPathMotion::new([vec3(0.0, -6.0, 0.0)], 1.3)));
+  let circle_iceberg = |center: Vec3, radius: f32, speed: f32| {
+    iceberg(SegmentPathMotion::circular_motion(center, radius, speed))
+  };
+  // spawn!(iceberg(vec3(0.0, -6.0, 0.0), 1.3, amah.as_ref()));
+  spawn!(circle_iceberg(vec3(0.0, -6.0, 0.0), 12.0, 1.3));
+  spawn!(circle_iceberg(vec3(0.0, -6.0, 0.0), 9.0, 1.3));
+  spawn!(circle_iceberg(vec3(0.0, -6.0, 0.0), 6.0, 1.3));
+  spawn!(circle_iceberg(vec3(0.0, -6.0, 0.0), 0.0, 1.3));
+
+  let up_down_iceberg = |origin: Vec3, height: f32, speed: f32| {
+    iceberg(SegmentPathMotion::new([origin, origin + Vec3::Y * height], speed))
+  };
+  spawn!(up_down_iceberg(vec3(5.343936, -3.0, -2.4758048), 4.0, 0.5));
+  spawn!(up_down_iceberg(vec3(9.069067, -4.0, -5.0675673), 4.0, 0.4));
+  spawn!(up_down_iceberg(vec3(12.84221, -6.0, -4.947112), 4.0, 0.3));
   spawn!(GibSpriteBundle(Sprite3d { image: amah.iceberg.clone(),
                                     transform: Transform::from_xyz(-30.0, 0.0, -40.0),
                                     pixels_per_metre: 1.5,
@@ -100,17 +97,19 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                       material: amah.water_material.clone(),
                       transform: Transform::from_xyz(0.0, -6.0, 0.0),
                       ..default() }));
+  // ScreenSpaceAmbientOcclusionPlugin
   // spawn!(bevy::core_pipeline::tonemapping::Tonemapping::);
   // Camera
   c.spawn((Camera3dBundle{ camera: Camera{hdr: true,..default()},
                            tonemapping: core_pipeline::tonemapping::Tonemapping::Reinhard,
                            ..default() },
+           UiCameraConfig{ show_ui: true },
            ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
                                cursor_lock_toggle_enabled: true,
                                cursor_lock_active: false,
                                mouse_sensitivity: 1.7,
-                               zoom: bevy_third_person_camera::Zoom::new(1.2, 8.0),
-                               zoom_sensitivity: 0.5,
+                               zoom: bevy_third_person_camera::Zoom::new(1.2, 13.0),
+                               zoom_sensitivity: 0.2,
                                ..default() }))
    // .insert(bevy::pbr::ScreenSpaceAmbientOcclusionBundle::default())
    // .insert(bevy::core_pipeline::experimental::taa::TemporalAntiAliasBundle::default())
@@ -155,23 +154,26 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                  transform,
                                  ..default() })),
       'p' => {
-        let player_height = 0.7;
-        let player_diameter = 0.3;
+        let player_height = 1.3;
+        let player_radius = 0.3;
+        let player_friction = 8.0;
+        let player_collider =
+          Collider::capsule(player_height - (2.0 * player_radius), player_radius);
+        let player_density = 0.05;
         spawn_with_child(&mut c,
                          (Player{ speed_boost: 0.0 },
-                          Friction::new(3.0)
+                          Friction::new(player_friction)
                           .with_combine_rule(CoefficientCombine::Multiply),
                           Restitution { coefficient: 0.0,
                                         combine_rule: CoefficientCombine::Multiply },
-                          GravityScale(1.8),
+                          MassPropertiesBundle::new_computed(&player_collider,
+                                                             player_density),
                           RigidBody::Dynamic,
                           ThirdPersonCameraTarget,
                           LockedAxes::ROTATION_LOCKED,
                           SpatialBundle::from_transform(transform),
-                          Collider::capsule(player_height, player_diameter),
-                         ),
+                          player_collider),
                          GibSpriteBundle(Sprite3d { image: amah.penguin_image.clone(),
-                                                    transform: Transform::IDENTITY,
                                                     pixels_per_metre: 19.0,
                                                     ..default() }))
       }
@@ -181,9 +183,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                 transform,
                                                 pixels_per_metre: 12.0,
                                                 ..default() }))),
-      'C' => spawn!((// RigidBody::Static,
-                     ItemPickUp::SpeedBoost,
-                     // Collider::capsule(0.8, 0.3),
+      'C' => spawn!((ItemPickUp::SpeedBoost,
                      GibSpriteBundle(Sprite3d { image: amah.coffee.clone(),
                                                 transform,
                                                 pixels_per_metre: 18.0,
