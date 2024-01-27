@@ -14,8 +14,8 @@ fn avg<T: std::iter::Sum + std::ops::Div<f32, Output = T>>(coll: impl IntoIterat
   let s = v.into_iter().sum::<T>();
   (n != 0).then(|| s / (n as f32))
 }
-const PLAYER_WALK_FORCE: f32 = 10.0;
-const PLAYER_MAX_SPEED: f32 = 10.0;
+const PLAYER_WALK_FORCE: f32 = 13.0;
+const PLAYER_MAX_SPEED: f32 = 13.0;
 const PLAYER_JUMP_IMPULSE: f32 = 2.3;
 pub fn player_movement(collisions: Res<Collisions>,
                        mut move_er: EventReader<MoveHorizontallyAction>,
