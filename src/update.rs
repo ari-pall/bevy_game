@@ -78,9 +78,7 @@ pub fn player_movement(collisions: Res<Collisions>,
     }
     let charge_fraction =
       player.jump_charge_level.unwrap_or(0) as f32 / (PLAYER_JUMP_CHARGE_LEVEL_MAX as f32);
-    player.jump_charge_level = if keyboard_input.just_pressed(KeyCode::Space) {
-      Some(0)
-    } else if keyboard_input.just_released(KeyCode::Space) {
+    player.jump_charge_level = if keyboard_input.just_released(KeyCode::Space) {
       if is_grounded {
         impulse.apply_impulse(Vector::Y
                               * (PLAYER_MIN_JUMP_IMPULSE
@@ -88,6 +86,8 @@ pub fn player_movement(collisions: Res<Collisions>,
                                     * charge_fraction)));
       }
       None
+    } else if keyboard_input.just_pressed(KeyCode::Space) {
+      Some(0)
     } else {
       player.jump_charge_level
             .map(|n| PLAYER_JUMP_CHARGE_LEVEL_MAX.min(n + 1))
