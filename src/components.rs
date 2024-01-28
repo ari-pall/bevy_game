@@ -23,6 +23,7 @@ pub struct EnemyMovement;
 #[derive(Component, Clone)]
 pub struct Player {
   pub speed_boost: f32,
+  pub jump_charge_level: Option<u16>,
 }
 #[derive(Component, Clone, Copy)]
 pub enum ItemPickUp {

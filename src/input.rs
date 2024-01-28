@@ -1,8 +1,8 @@
-use {bevy::input::mouse::MouseButtonInput, bevy_third_person_camera::ThirdPersonCamera};
-
 use {crate::{assetstuff::AllMyAssetHandles, components::Player},
      bevy::{gltf::Gltf,
+            input::mouse::MouseButtonInput,
             prelude::{Input, KeyCode, Res, *}},
+     bevy_third_person_camera::ThirdPersonCamera,
      bevy_xpbd_3d::prelude::{ExternalForce, ExternalImpulse, Rotation, ShapeCaster,
                              ShapeHits},
      rust_utils::comment};
@@ -13,9 +13,15 @@ fn debug_println(t: impl core::fmt::Debug) {
 pub struct MoveHorizontallyAction(pub Vector2);
 #[derive(Event)]
 pub struct JumpAction;
+#[derive(Event)]
+pub struct JumpStart;
+#[derive(Event)]
+pub struct JumpEnd;
 // does things based on keyboard input
 fn keyboard_input(mut movement_event_writer: EventWriter<MoveHorizontallyAction>,
                   mut jump_event_writer: EventWriter<JumpAction>,
+                  // mut jump_start_event_writer: EventWriter<JumpStart>,
+                  // mut jump_end_event_writer: EventWriter<JumpEnd>,
                   keyboard_input: Res<Input<KeyCode>>,
                   mouse_button_input: Res<Input<MouseButton>>,
                   mut cam_q: Query<&mut ThirdPersonCamera>,
@@ -29,6 +35,9 @@ fn keyboard_input(mut movement_event_writer: EventWriter<MoveHorizontallyAction>
                          Has<ExternalForce>,
                          Has<ExternalImpulse>),
                         With<Player>>) {
+  // if keyboard_input.just_pressed(KeyCode::Space) {
+  //   jump_start_event_writer.send(JumpStart);
+  // }
   if keyboard_input.just_pressed(KeyCode::L) {
     playerq.for_each(debug_println);
   }
@@ -71,6 +80,8 @@ impl Plugin for MyInputPlugin {
   fn build(&self, app: &mut App) {
     app.add_event::<MoveHorizontallyAction>()
        .add_event::<JumpAction>()
+       .add_event::<JumpStart>()
+       .add_event::<JumpEnd>()
        .add_systems(Update, keyboard_input);
   }
 }

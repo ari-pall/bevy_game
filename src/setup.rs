@@ -156,12 +156,12 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
       'p' => {
         let player_height = 1.3;
         let player_radius = 0.3;
-        let player_friction = 8.0;
+        let player_friction = 10.0;
         let player_collider =
           Collider::capsule(player_height - (2.0 * player_radius), player_radius);
         let player_density = 0.05;
         spawn_with_child(&mut c,
-                         (Player{ speed_boost: 0.0 },
+                         (Player{ speed_boost: 0.0, jump_charge_level: None },
                           Friction::new(player_friction)
                           .with_combine_rule(CoefficientCombine::Multiply),
                           Restitution { coefficient: 0.0,

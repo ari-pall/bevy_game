@@ -1,8 +1,7 @@
-use crate::setup::spawn_with_child;
-
 use {crate::{assetstuff::AllMyAssetHandles,
              components::{GibSpriteBundle, ItemPickUp, Player, PlayerFollower},
-             input::*},
+             input::*,
+             setup::spawn_with_child},
      bevy::prelude::*,
      bevy_sprite3d::{Sprite3d, Sprite3dComponent, Sprite3dParams},
      bevy_xpbd_3d::{math::*, prelude::*},
@@ -14,27 +13,33 @@ fn avg<T: std::iter::Sum + std::ops::Div<f32, Output = T>>(coll: impl IntoIterat
   let s = v.into_iter().sum::<T>();
   (n != 0).then(|| s / (n as f32))
 }
-const PLAYER_WALK_FORCE: f32 = 13.0;
+const PLAYER_WALK_FORCE: f32 = 14.0;
 const PLAYER_MAX_SPEED: f32 = 13.0;
-const PLAYER_JUMP_IMPULSE: f32 = 2.3;
+// const PLAYER_JUMP_IMPULSE: f32 = 2.3;
+const PLAYER_MIN_JUMP_IMPULSE: f32 = 1.2;
+const PLAYER_MAX_JUMP_IMPULSE: f32 = 2.9;
+const PLAYER_JUMP_CHARGE_LEVEL_MAX: u16 = 130;
 pub fn player_movement(collisions: Res<Collisions>,
+                       keyboard_input: Res<Input<KeyCode>>,
                        mut move_er: EventReader<MoveHorizontallyAction>,
-                       mut jump_er: EventReader<JumpAction>,
                        camq: Query<&Transform, With<Camera3d>>,
                        linvelq: Query<&LinearVelocity>,
+                       mut transformsq: Query<&mut Transform, Without<Camera3d>>,
                        mut playerq: Query<(Entity,
                               &mut ExternalForce,
                               &mut ExternalImpulse,
                               &LinearVelocity,
-                              &Player)>) {
+                              &Children,
+                              &mut Player)>) {
   if let (Ok((player_entity,
               mut force,
               mut impulse,
               &LinearVelocity(linvel),
-              Player { speed_boost })),
+              player_children,
+              mut player)),
           Ok(transform)) = (playerq.get_single_mut(), camq.get_single())
   {
-    let player_max_speed = PLAYER_MAX_SPEED + speed_boost;
+    let player_max_speed = PLAYER_MAX_SPEED + player.speed_boost;
     let player_colls = collisions.collisions_with_entity(player_entity);
     let entities_colliding_with_player =
       player_colls.flat_map(|c: &Contacts| [c.entity1, c.entity2])
@@ -44,18 +49,16 @@ pub fn player_movement(collisions: Res<Collisions>,
     let avg_linvel_of_entities_colliding_with_player =
       avg(linvels_of_entities_colliding_with_player.map(|lv| lv.0));
     // if grounded
+    let is_grounded = avg_linvel_of_entities_colliding_with_player.is_some();
     if let Some(avglv) = avg_linvel_of_entities_colliding_with_player {
-      if jump_er.read().next().is_some() {
-        impulse.apply_impulse(Vector::Y * PLAYER_JUMP_IMPULSE);
-      }
-      let right = transform.right().normalize();
-      let forward = -(right.cross(Vec3::Y).normalize_or_zero());
-      // let speed = linvel.length();
-      let relvel = linvel - avglv;
-      let relspeed = relvel.length();
-      force.persistent = false;
-      force.apply_force({
-             if let Some(&MoveHorizontallyAction(Vec2 { x, y })) = move_er.read().next() {
+      if let Some(&MoveHorizontallyAction(Vec2 { x, y })) = move_er.read().next() {
+        let right = transform.right().normalize();
+        let forward = -(right.cross(Vec3::Y).normalize_or_zero());
+        // let speed = linvel.length();
+        let relvel = linvel - avglv;
+        let relspeed = relvel.length();
+        force.persistent = false;
+        force.apply_force({
                let desired_force = (right * x + forward * y) * PLAYER_WALK_FORCE;
                if relspeed < 0.1 {
                  desired_force
@@ -69,17 +72,46 @@ pub fn player_movement(collisions: Res<Collisions>,
                      desired_parallel
                    };
                  desired_parallel_bounded + desired_perpendicular
-
-                 // desired_force
                }
-             } else {
-               Vec3::ZERO
-               // -linvel * 6.7
-             }
-           });
+             });
+      };
+    }
+    let charge_fraction =
+      player.jump_charge_level.unwrap_or(0) as f32 / (PLAYER_JUMP_CHARGE_LEVEL_MAX as f32);
+    player.jump_charge_level = if keyboard_input.just_pressed(KeyCode::Space) {
+      Some(0)
+    } else if keyboard_input.just_released(KeyCode::Space) {
+      if is_grounded {
+        impulse.apply_impulse(Vector::Y
+                              * (PLAYER_MIN_JUMP_IMPULSE
+                                 + ((PLAYER_MAX_JUMP_IMPULSE - PLAYER_MIN_JUMP_IMPULSE)
+                                    * charge_fraction)));
+      }
+      None
+    } else {
+      player.jump_charge_level
+            .map(|n| PLAYER_JUMP_CHARGE_LEVEL_MAX.min(n + 1))
+    };
+    if let Some(&ce) = player_children.first() {
+      if let Ok(mut t) = transformsq.get_mut(ce) {
+        t.scale.y = 1.0 - (charge_fraction * 0.3);
+      }
     }
   }
 }
+// pub fn player_charged_jump(collisions: Res<Collisions>,
+//                            mut move_er: EventReader<MoveHorizontallyAction>,
+//                            mut jump_er: EventReader<JumpAction>,
+//                            mut jump_start_er: EventReader<JumpStart>,
+//                            mut jump_end_er: EventReader<JumpEnd>,
+//                            camq: Query<&Transform, With<Camera3d>>,
+//                            linvelq: Query<&LinearVelocity>,
+//                            mut playerq: Query<(Entity,
+//                                   &mut ExternalForce,
+//                                   &mut ExternalImpulse,
+//                                   &LinearVelocity,
+//                                   &Player)>) {
+// }
 pub fn sprites_face_camera(camq: Query<&GlobalTransform, With<Camera3d>>,
                            mut spriteq: Query<(&mut Transform, &GlobalTransform),
                                  (With<Sprite3dComponent>,
