@@ -58,6 +58,7 @@ pub struct AllMyAssetHandles {
   pub character_controller_demo_scene: Handle<Scene>,
   pub level_scene: Handle<Scene>,
   pub island_level_scene: Handle<Scene>,
+  pub some_sketch_level: Handle<Scene>,
   pub snowman: Handle<Scene>,
   pub funky_image: Handle<Image>,
   pub colorful_image: Handle<Image>,
@@ -102,6 +103,7 @@ impl Plugin for AssetStuffPlugin {
       character_controller_demo_scene, "character_controller_demo.glb", "Scene0"
       level_scene, "level.glb", "Scene0"
       island_level_scene, "this_here_level.glb", "Scene0"
+      some_sketch_level, "somesketchlevel.glb", "Scene0"
       snowman, "snowman.glb", "Scene0"
     }
     asset_paths! {

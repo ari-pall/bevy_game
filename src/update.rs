@@ -30,17 +30,20 @@ pub fn player_movement(collisions: Res<Collisions>,
                               &mut ExternalImpulse,
                               &LinearVelocity,
                               &Children,
+                              &ShapeHits,
                               &mut Player)>) {
   if let (Ok((player_entity,
               mut force,
               mut impulse,
               &LinearVelocity(linvel),
               player_children,
+              player_shape_hits,
               mut player)),
           Ok(transform)) = (playerq.get_single_mut(), camq.get_single())
   {
     let player_max_speed = PLAYER_MAX_SPEED + player.speed_boost;
     let player_colls = collisions.collisions_with_entity(player_entity);
+    player_shape_hits.iter().map(|r| r.entity)
     let entities_colliding_with_player =
       player_colls.flat_map(|c: &Contacts| [c.entity1, c.entity2])
                   .filter(|&e| e != player_entity);
@@ -79,6 +82,7 @@ pub fn player_movement(collisions: Res<Collisions>,
     let charge_fraction =
       player.jump_charge_level.unwrap_or(0) as f32 / (PLAYER_JUMP_CHARGE_LEVEL_MAX as f32);
     player.jump_charge_level = if keyboard_input.just_released(KeyCode::Space) {
+      // is_grounded
       if is_grounded {
         impulse.apply_impulse(Vector::Y
                               * (PLAYER_MIN_JUMP_IMPULSE

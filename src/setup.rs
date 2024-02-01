@@ -1,3 +1,7 @@
+use std::array::TryFromSliceError;
+
+use bevy_xpbd_3d::math::Quaternion;
+
 use {crate::{assetstuff::AllMyAssetHandles,
              components::{GibSpriteBundle, ItemPickUp, Player},
              jumpy_penguin::SegmentPathMotion},
@@ -97,6 +101,16 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                       material: amah.water_material.clone(),
                       transform: Transform::from_xyz(0.0, -6.0, 0.0),
                       ..default() }));
+  // spawn!((RigidBody::Static,
+  //         AsyncSceneCollider::new(Some(ComputedCollider::TriMesh)),
+  //         // Friction::default(),
+  //         // Restitution::default(),
+  //         // LinearVelocity(Vec3::ZERO),
+  //         SceneBundle { scene: amah.island_level_scene.clone(),
+  //                       transform:
+  //                         Transform::from_xyz(10.0, -30.0, -10.0).with_scale(Vec3::ONE
+  //                                                                            * 20.0),
+  //                       ..default() }));
   // ScreenSpaceAmbientOcclusionPlugin
   // spawn!(bevy::core_pipeline::tonemapping::Tonemapping::);
   // Camera
@@ -160,10 +174,19 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
         let player_collider =
           Collider::capsule(player_height - (2.0 * player_radius), player_radius);
         let player_density = 0.05;
+        let player_shape_caster = ShapeCaster::new(player_collider.clone(),
+                                                   Vec3::ZERO,
+                                                   Quat::IDENTITY,
+                                                   Vec3::NEG_Y).with_max_time_of_impact(0.4)
+                                                               .with_max_hits(5);
         spawn_with_child(&mut c,
-                         (Player{ speed_boost: 0.0, jump_charge_level: None },
-                          Friction::new(player_friction)
-                          .with_combine_rule(CoefficientCombine::Multiply),
+                         (Player { speed_boost: 0.0,
+                                   jump_charge_level: None },
+                          Friction { dynamic_coefficient: player_friction,
+                                     static_coefficient: 0.1,
+                                     combine_rule: CoefficientCombine::Multiply },
+                          // Friction::new(player_friction)
+                          // .with_combine_rule(CoefficientCombine::Multiply),
                           Restitution { coefficient: 0.0,
                                         combine_rule: CoefficientCombine::Multiply },
                           MassPropertiesBundle::new_computed(&player_collider,
@@ -172,7 +195,8 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                           ThirdPersonCameraTarget,
                           LockedAxes::ROTATION_LOCKED,
                           SpatialBundle::from_transform(transform),
-                          player_collider),
+                          player_collider,
+                          player_shape_caster),
                          GibSpriteBundle(Sprite3d { image: amah.penguin_image.clone(),
                                                     pixels_per_metre: 19.0,
                                                     ..default() }))
