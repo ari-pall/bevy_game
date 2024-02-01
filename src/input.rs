@@ -4,7 +4,7 @@ use {crate::components::Player,
      bevy_xpbd_3d::prelude::{ExternalForce, ExternalImpulse, Rotation, ShapeCaster,
                              ShapeHits},
      rust_utils::comment};
-fn debug_println(t: impl core::fmt::Debug) {
+pub fn debug_println(t: impl core::fmt::Debug) {
   println!("{:?}", t);
 }
 #[derive(Event)]

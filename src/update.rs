@@ -23,34 +23,46 @@ pub fn player_movement(collisions: Res<Collisions>,
                        keyboard_input: Res<Input<KeyCode>>,
                        mut move_er: EventReader<MoveHorizontallyAction>,
                        camq: Query<&Transform, With<Camera3d>>,
-                       linvelq: Query<&LinearVelocity>,
+                       linvelq: Query<&LinearVelocity, Without<Player>>,
                        mut transformsq: Query<&mut Transform, Without<Camera3d>>,
                        mut playerq: Query<(Entity,
                               &mut ExternalForce,
                               &mut ExternalImpulse,
-                              &LinearVelocity,
+                              &mut LinearVelocity,
                               &Children,
                               &ShapeHits,
                               &mut Player)>) {
   if let (Ok((player_entity,
-              mut force,
-              mut impulse,
-              &LinearVelocity(linvel),
+              mut player_force,
+              mut player_impulse,
+              mut player_linvel,
+              // &LinearVelocity(),
               player_children,
               player_shape_hits,
               mut player)),
           Ok(transform)) = (playerq.get_single_mut(), camq.get_single())
   {
     let player_max_speed = PLAYER_MAX_SPEED + player.speed_boost;
-    let player_colls = collisions.collisions_with_entity(player_entity);
-    player_shape_hits.iter().map(|r| r.entity)
+
     let entities_colliding_with_player =
-      player_colls.flat_map(|c: &Contacts| [c.entity1, c.entity2])
-                  .filter(|&e| e != player_entity);
+      player_shape_hits.iter().map(|d: &ShapeHitData| d.entity);
+    if keyboard_input.just_released(KeyCode::K) {
+      println!("colls:");
+      entities_colliding_with_player.clone()
+                                    .for_each(debug_println);
+    }
     let linvels_of_entities_colliding_with_player =
       linvelq.iter_many(entities_colliding_with_player);
     let avg_linvel_of_entities_colliding_with_player =
       avg(linvels_of_entities_colliding_with_player.map(|lv| lv.0));
+    // let player_colls = collisions.collisions_with_entity(player_entity);
+    // let entities_colliding_with_player =
+    //   player_colls.flat_map(|c: &Contacts| [c.entity1, c.entity2])
+    //               .filter(|&e| e != player_entity);
+    // let linvels_of_entities_colliding_with_player =
+    //   linvelq.iter_many(entities_colliding_with_player);
+    // let avg_linvel_of_entities_colliding_with_player =
+    //   avg(linvels_of_entities_colliding_with_player.map(|lv| lv.0));
     // if grounded
     let is_grounded = avg_linvel_of_entities_colliding_with_player.is_some();
     if let Some(avglv) = avg_linvel_of_entities_colliding_with_player {
@@ -58,25 +70,41 @@ pub fn player_movement(collisions: Res<Collisions>,
         let right = transform.right().normalize();
         let forward = -(right.cross(Vec3::Y).normalize_or_zero());
         // let speed = linvel.length();
-        let relvel = linvel - avglv;
+        let relvel = player_linvel.0 - avglv;
         let relspeed = relvel.length();
-        force.persistent = false;
-        force.apply_force({
-               let desired_force = (right * x + forward * y) * PLAYER_WALK_FORCE;
-               if relspeed < 0.1 {
-                 desired_force
-               } else {
-                 let desired_parallel = desired_force.project_onto(relvel);
-                 let desired_perpendicular = desired_force - desired_parallel;
-                 let desired_parallel_bounded =
-                   if desired_parallel.dot(relvel).is_sign_positive() {
-                     desired_parallel * (1.0 - relspeed / player_max_speed)
-                   } else {
-                     desired_parallel
-                   };
-                 desired_parallel_bounded + desired_perpendicular
-               }
-             });
+        player_linvel.0 += 0.05 * {
+          let desired_force = (right * x + forward * y) * PLAYER_WALK_FORCE;
+          if relspeed < 0.1 {
+            desired_force
+          } else {
+            let desired_parallel = desired_force.project_onto(relvel);
+            let desired_perpendicular = desired_force - desired_parallel;
+            let desired_parallel_bounded = if desired_parallel.dot(relvel).is_sign_positive()
+            {
+              desired_parallel * (1.0 - relspeed / player_max_speed)
+            } else {
+              desired_parallel
+            };
+            desired_parallel_bounded + desired_perpendicular
+          }
+        };
+        // player_force.persistent = false;
+        // player_force.apply_force({
+        //               let desired_force = (right * x + forward * y) * PLAYER_WALK_FORCE;
+        //               if relspeed < 0.1 {
+        //                 desired_force
+        //               } else {
+        //                 let desired_parallel = desired_force.project_onto(relvel);
+        //                 let desired_perpendicular = desired_force - desired_parallel;
+        //                 let desired_parallel_bounded =
+        //                   if desired_parallel.dot(relvel).is_sign_positive() {
+        //                     desired_parallel * (1.0 - relspeed / player_max_speed)
+        //                   } else {
+        //                     desired_parallel
+        //                   };
+        //                 desired_parallel_bounded + desired_perpendicular
+        //               }
+        //             });
       };
     }
     let charge_fraction =
@@ -84,10 +112,19 @@ pub fn player_movement(collisions: Res<Collisions>,
     player.jump_charge_level = if keyboard_input.just_released(KeyCode::Space) {
       // is_grounded
       if is_grounded {
-        impulse.apply_impulse(Vector::Y
-                              * (PLAYER_MIN_JUMP_IMPULSE
-                                 + ((PLAYER_MAX_JUMP_IMPULSE - PLAYER_MIN_JUMP_IMPULSE)
-                                    * charge_fraction)));
+        println!("jumped");
+        player_linvel.0 += Vec3::Y
+                           * 3.0
+                           * (PLAYER_MIN_JUMP_IMPULSE
+                              + ((PLAYER_MAX_JUMP_IMPULSE - PLAYER_MIN_JUMP_IMPULSE)
+                                 * charge_fraction));
+        // player_force.persistent = false;
+        // player_force.apply_force(Vec3::Y
+        //                          * 100.0
+        //                          * (PLAYER_MIN_JUMP_IMPULSE
+        //                             + ((PLAYER_MAX_JUMP_IMPULSE
+        //                                 - PLAYER_MIN_JUMP_IMPULSE)
+        //                                * charge_fraction)));
       }
       None
     } else if keyboard_input.just_pressed(KeyCode::Space) {
