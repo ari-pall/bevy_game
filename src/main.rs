@@ -6,6 +6,7 @@
 #![allow(unused_mut)]
 
 use {bevy::{prelude::*, window},
+     bevy_rapier3d::prelude::NoUserData,
      bevy_third_person_camera::ThirdPersonCameraPlugin};
 
 pub mod assetstuff;
@@ -62,14 +63,16 @@ pub fn main() {
     ThirdPersonCameraPlugin,
     // Aery,
     bevy_sprite3d::Sprite3dPlugin,
-    bevy_xpbd_3d::prelude::PhysicsPlugins::default(),
+    bevy_rapier3d::prelude::RapierPhysicsPlugin::<NoUserData>::default(),
     input::MyInputPlugin, // game::game_plugin,
                           // input::keylogger,
                           // input::get_pressed_keys_plugin,
                           // tests::tests_plugin
   ))
 
-        .insert_resource(bevy_xpbd_3d::resources::SubstepCount(2))
+            .insert_resource(AmbientLight{ color: Color::ALICE_BLUE, brightness: 0.2 })
+
+        // .insert_resource(bevy_xpbd_3d::resources::SubstepCount(2))
             .add_systems(Startup, setup::setup)
             .add_systems(Update,
                          (update::gib_sprite_bundle,
@@ -84,7 +87,6 @@ pub fn main() {
   // .insert_resource(ClearColor(Color::SALMON))
   // .insert_resource(game::generate_level())
   // .add_plugin(bevy_fps_controller::controller::FpsControllerPlugin)
-  // .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
   // .add_startup_system(spawn_planets_and_lunar_lander)
   // .add_system(game::ui)
   // .add_startup_system(load_lunar_lander)

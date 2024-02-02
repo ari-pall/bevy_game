@@ -1,9 +1,9 @@
 use {crate::{assetstuff::AllMyAssetHandles,
              components::{GibSpriteBundle, Player}},
      bevy::{math::vec3, prelude::*},
+     bevy_rapier3d::prelude::*,
      bevy_sprite3d::Sprite3d,
      bevy_third_person_camera::{ThirdPersonCamera, ThirdPersonCameraTarget},
-     bevy_xpbd_3d::prelude::{LinearVelocity, *},
      rust_utils::{comment, map, mapv, vec},
      std::iter::{Cycle, Peekable}};
 
@@ -33,13 +33,13 @@ impl SegmentPathMotion {
   }
   pub fn dest(&mut self) -> Vec3 { *(self.destinations.peek().unwrap()) }
 }
-pub fn segment_path_motion(mut q: Query<(&mut LinearVelocity,
+pub fn segment_path_motion(mut q: Query<(&mut Velocity,
                                   &Transform,
                                   &mut SegmentPathMotion)>) {
   for (mut lv, t, mut spm) in q.iter_mut() {
     if spm.dest().distance(t.translation) < spm.speed * 3.0 {
       spm.destinations.next();
     }
-    lv.0 = (spm.dest() - t.translation).normalize_or_zero() * spm.speed;
+    lv.linvel = (spm.dest() - t.translation).normalize_or_zero() * spm.speed;
   }
 }

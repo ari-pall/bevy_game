@@ -1,14 +1,10 @@
-use std::array::TryFromSliceError;
-
-use bevy_xpbd_3d::math::Quaternion;
-
 use {crate::{assetstuff::AllMyAssetHandles,
              components::{GibSpriteBundle, ItemPickUp, Player},
              jumpy_penguin::SegmentPathMotion},
      bevy::{core_pipeline, math::vec3, prelude::*},
+     bevy_rapier3d::prelude::*,
      bevy_sprite3d::Sprite3d,
      bevy_third_person_camera::{ThirdPersonCamera, ThirdPersonCameraTarget},
-     bevy_xpbd_3d::prelude::*,
      rust_utils::comment};
 
 // // Environment (see `async_colliders` example for creating colliders from scenes)
@@ -66,9 +62,10 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                             ..default() });
 
   let iceberg = |mut spm: SegmentPathMotion| {
-    (RigidBody::Kinematic,
+    (RigidBody::KinematicVelocityBased,
+     Velocity::default(),
      Friction::default(),
-     AsyncCollider(ComputedCollider::ConvexHull),
+     AsyncCollider(ComputedColliderShape::ConvexHull),
      PbrBundle { mesh: amah.flatbox.clone(),
                  material: amah.snow_material.clone(),
                  transform: Transform::from_translation(spm.dest()),
@@ -95,39 +92,46 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                     transform: Transform::from_xyz(-30.0, 0.0, -40.0),
                                     pixels_per_metre: 1.5,
                                     ..default() }));
-  spawn!((RigidBody::Static,
-          AsyncCollider(ComputedCollider::ConvexHull),
+  spawn!((RigidBody::Fixed,
+          AsyncCollider(ComputedColliderShape::ConvexHull),
           PbrBundle { mesh: amah.planesize50.clone(),
                       material: amah.water_material.clone(),
                       transform: Transform::from_xyz(0.0, -6.0, 0.0),
                       ..default() }));
-  spawn!((RigidBody::Static,
-          AsyncSceneCollider::new(Some(ComputedCollider::TriMesh)),
-          // Friction::default(),
-          // Restitution::default(),
-          // LinearVelocity(Vec3::ZERO),
+  spawn!((RigidBody::Fixed,
+          AsyncSceneCollider { shape: Some(ComputedColliderShape::TriMesh),
+                               named_shapes: default() },
           SceneBundle { scene: amah.island_level_scene.clone(),
                         transform:
                           Transform::from_xyz(10.0, -30.0, -10.0).with_scale(Vec3::ONE
                                                                              * 20.0),
                         ..default() }));
+  spawn!((RigidBody::Fixed,
+          Friction::new(0.1),
+          AsyncSceneCollider { shape: Some(ComputedColliderShape::TriMesh),
+                               named_shapes: default() },
+          SceneBundle { scene: amah.some_sketch_level.clone(),
+                        transform:
+                          Transform::from_xyz(-30.0, -30.0, 30.0).with_scale(Vec3::ONE
+                                                                             * 20.0),
+                        ..default() }));
   // ScreenSpaceAmbientOcclusionPlugin
-  // spawn!(bevy::core_pipeline::tonemapping::Tonemapping::);
   // Camera
-  c.spawn((Camera3dBundle{ camera: Camera{hdr: true,..default()},
-                           tonemapping: core_pipeline::tonemapping::Tonemapping::Reinhard,
+  spawn!((Camera3dBundle { camera: Camera { hdr: true,
+                                            ..default() },
+                           tonemapping:
+                             core_pipeline::tonemapping::Tonemapping::Reinhard,
                            ..default() },
-           UiCameraConfig{ show_ui: true },
-           ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
-                               cursor_lock_toggle_enabled: true,
-                               cursor_lock_active: false,
-                               mouse_sensitivity: 1.7,
-                               zoom: bevy_third_person_camera::Zoom::new(1.2, 13.0),
-                               zoom_sensitivity: 0.2,
-                               ..default() }))
-   // .insert(bevy::pbr::ScreenSpaceAmbientOcclusionBundle::default())
-   // .insert(bevy::core_pipeline::experimental::taa::TemporalAntiAliasBundle::default())
-    ;
+          UiCameraConfig { show_ui: true },
+          ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
+                              cursor_lock_toggle_enabled: true,
+                              cursor_lock_active: false,
+                              mouse_sensitivity: 1.7,
+                              zoom: bevy_third_person_camera::Zoom::new(1.2, 13.0),
+                              zoom_sensitivity: 0.2,
+                              ..default() }));
+  // .insert(bevy::pbr::ScreenSpaceAmbientOcclusionBundle::default())
+  // .insert(bevy::core_pipeline::experimental::taa::TemporalAntiAliasBundle::default())
   let level =
     [include_str!("level1.txt"),
      include_str!("level2.txt"),
@@ -146,14 +150,15 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
     let transform =
       Transform::from_translation(Vec3::from_slice(&[x, y, z].map(|n| n as f32)));
     let block = |material: Handle<StandardMaterial>| {
-      (RigidBody::Static,
+      (RigidBody::Fixed,
        Friction::default(),
-       AsyncCollider(ComputedCollider::ConvexHull),
+       AsyncCollider(ComputedColliderShape::ConvexHull),
        MaterialMeshBundle { mesh: amah.unitcube.clone(),
                             material,
                             transform,
                             ..default() })
     };
+    // Collider::from_bevy_mesh
     match tile {
       'w' => spawn!(block(amah.funky_material.clone())),
       'g' => spawn!(block(amah.grass_material.clone())),
@@ -161,48 +166,49 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
       'S' => spawn!(block(amah.stone_material.clone())),
       'o' | ' ' => (),
       'c' => spawn!((RigidBody::Dynamic,
-                     MassPropertiesBundle::default(),
-                     AsyncCollider(ComputedCollider::ConvexHull),
+                     ColliderMassProperties::Density(1.0),
+                     // MassPropertiesBundle::default(),
+                     AsyncCollider(ComputedColliderShape::ConvexHull),
                      PbrBundle { mesh: amah.cube.clone(),
                                  material: amah.colorful_material.clone(),
                                  transform,
                                  ..default() })),
       'p' => {
-        let player_height = 1.3;
+        let player_height = 0.75;
         let player_radius = 0.3;
         let player_friction = 4.0;
-        let player_collider =
-          Collider::capsule(player_height - (2.0 * player_radius), player_radius);
-        let player_density = 0.05;
-        let player_shape_caster = ShapeCaster::new(player_collider.clone(),
-                                                   Vec3::ZERO,
-                                                   Quat::IDENTITY,
-                                                   Vec3::NEG_Y).with_max_time_of_impact(0.3)
-                                                               .with_max_hits(5);
+        let player_collider = Collider::capsule_y(player_height / 2.0, player_radius);
+        // let player_density = 1.0;
+        let player_mass = 0.3;
+        // let player_shape_caster = ShapeCaster::new(player_collider.clone(),
+        //                                            Vec3::ZERO,
+        //                                            Quat::IDENTITY,
+        //                                            Vec3::NEG_Y).with_max_time_of_impact(0.3)
+        //                                                        .with_max_hits(5);
         spawn_with_child(&mut c,
                          (Player { speed_boost: 0.0,
                                    jump_charge_level: None },
-                          Friction { dynamic_coefficient: player_friction,
-                                     static_coefficient: player_friction,
-                                     combine_rule: CoefficientCombine::Multiply },
-                          // Friction::new(player_friction)
-                          // .with_combine_rule(CoefficientCombine::Multiply),
+                          ColliderMassProperties::Mass(player_mass),
+                          Friction { combine_rule: CoefficientCombineRule::Multiply,
+                                     coefficient: player_friction },
                           Restitution { coefficient: 0.0,
-                                        combine_rule: CoefficientCombine::Multiply },
-                          MassPropertiesBundle::new_computed(&player_collider,
-                                                             player_density),
+                                        combine_rule: CoefficientCombineRule::Multiply },
+                          ExternalForce::default(),
+                          ExternalImpulse::default(),
+                          Velocity::default(),
                           RigidBody::Dynamic,
                           ThirdPersonCameraTarget,
                           LockedAxes::ROTATION_LOCKED,
                           SpatialBundle::from_transform(transform),
                           player_collider,
-                          player_shape_caster),
+                          // player_shape_caster
+                         ),
                          GibSpriteBundle(Sprite3d { image: amah.penguin_image.clone(),
                                                     pixels_per_metre: 19.0,
                                                     ..default() }))
       }
-      't' => spawn!((RigidBody::Static,
-                     Collider::capsule(0.8, 0.2),
+      't' => spawn!((RigidBody::Fixed,
+                     Collider::capsule_y(0.6, 0.2),
                      GibSpriteBundle(Sprite3d { image: amah.tree.clone(),
                                                 transform,
                                                 pixels_per_metre: 12.0,
@@ -213,8 +219,11 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                 pixels_per_metre: 18.0,
                                                 ..default() }))),
       'L' => spawn!((RigidBody::Dynamic,
-                     MassPropertiesBundle::default(),
-                     AsyncSceneCollider::new(Some(ComputedCollider::ConvexHull)),
+                     ColliderMassProperties::Density(1.0),
+                     // MassPropertiesBundle::default(),
+                     AsyncSceneCollider { shape:
+                                            Some(ComputedColliderShape::ConvexHull),
+                                          named_shapes: default() },
                      SceneBundle { scene: amah.lunarlander.clone(),
                                    transform,
                                    ..default() })),

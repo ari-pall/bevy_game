@@ -35,11 +35,11 @@ dist = {inherits = "release", lto = "thin"}
 rust_utils = {path = "../rust_utils"}
 # bevy_utils = {path = "../bevy_utils"}
 aery = "0.5"
-bevy_xpbd_3d = "*"
-# bevy_panorbit_camera = "*"
+# bevy_xpbd_3d = "*"
 bevy_third_person_camera = "*"
 rand = "*"
 bevy_sprite3d = "*"
+bevy_rapier3d = {version = "0.23.0", features = ["wasm-bindgen"]}
 bevy = { version = "*", default-features = false, features = [
     "animation",
     "bevy_asset",
@@ -65,5 +65,3 @@ bevy = { version = "*", default-features = false, features = [
     "default_font",
     "webgl2",
 ] }
-
-

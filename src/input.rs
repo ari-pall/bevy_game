@@ -1,14 +1,13 @@
 use {crate::components::Player,
      bevy::prelude::{Input, KeyCode, Res, *},
+     bevy_rapier3d::prelude::{ExternalForce, ExternalImpulse},
      bevy_third_person_camera::ThirdPersonCamera,
-     bevy_xpbd_3d::prelude::{ExternalForce, ExternalImpulse, Rotation, ShapeCaster,
-                             ShapeHits},
      rust_utils::comment};
 pub fn debug_println(t: impl core::fmt::Debug) {
   println!("{:?}", t);
 }
 #[derive(Event)]
-pub struct MoveHorizontallyAction(pub Vector2);
+pub struct MoveHorizontallyAction(pub Vec2);
 #[derive(Event)]
 pub struct JumpAction;
 #[derive(Event)]
@@ -16,26 +15,16 @@ pub struct JumpStart;
 #[derive(Event)]
 pub struct JumpEnd;
 // does things based on keyboard input
-fn keyboard_input(mut movement_event_writer: EventWriter<MoveHorizontallyAction>,
-                  mut jump_event_writer: EventWriter<JumpAction>,
-                  // mut jump_start_event_writer: EventWriter<JumpStart>,
-                  // mut jump_end_event_writer: EventWriter<JumpEnd>,
+fn keyboard_input(// mut movement_event_writer: EventWriter<MoveHorizontallyAction>,
                   keyboard_input: Res<Input<KeyCode>>,
                   mouse_button_input: Res<Input<MouseButton>>,
                   mut cam_q: Query<&mut ThirdPersonCamera>,
-                  // _gltfs: Res<Assets<Gltf>>,
-                  // _amah: Res<AllMyAssetHandles>,
-                  playerq: Query<&Transform, With<Player>>,
-                  q: Query<(Has<Rotation>,
-                         Has<ShapeCaster>,
-                         Has<ShapeHits>,
-                         // Has<Grounded>,
-                         Has<ExternalForce>,
-                         Has<ExternalImpulse>),
-                        With<Player>>) {
-  // if keyboard_input.just_pressed(KeyCode::Space) {
-  //   jump_start_event_writer.send(JumpStart);
-  // }
+                  mut playerq: Query<(Entity,
+                         Option<&ExternalForce>,
+                         Option<&ExternalImpulse>,
+                         Option<&Velocity>,
+                         Option<&Children>,
+                         Option<&Player>)>) {
   if keyboard_input.just_pressed(KeyCode::L) {
     playerq.for_each(debug_println);
   }
@@ -44,34 +33,19 @@ fn keyboard_input(mut movement_event_writer: EventWriter<MoveHorizontallyAction>
       cam.cursor_lock_active = !cam.cursor_lock_active;
     }
   }
-  if keyboard_input.just_pressed(KeyCode::G) {
-    debug_println(&q);
-    // debug_println(gltfs.get(amah.character_controller_demo_scene_gltf.clone())
-    //                    .unwrap());
-  }
-  if keyboard_input.just_pressed(KeyCode::P) {
-    let tup = q.single();
-    println!("Rotation: {}", tup.0);
-    println!("ShapeCaster: {}", tup.1);
-    println!("ShapeHits: {}", tup.1);
-    println!("Grounded: {}", tup.3);
-    println!("Externalforce: {}", tup.4);
-    println!("ExternalImpulse: {}", tup.4);
-  }
-  let dir =
-    [(KeyCode::D, Vec2::X),
-     (KeyCode::A, Vec2::NEG_X),
-     (KeyCode::W, Vec2::Y),
-     (KeyCode::S, Vec2::NEG_Y)].into_iter()
-                               .filter_map(|(k, v)| keyboard_input.pressed(k).then_some(v))
-                               .sum::<Vec2>()
-                               .normalize_or_zero();
-  if dir != Vector2::ZERO {
-    movement_event_writer.send(MoveHorizontallyAction(dir.normalize()));
-  }
-  if keyboard_input.just_pressed(KeyCode::Space) {
-    jump_event_writer.send(JumpAction);
-  }
+  // let dir =
+  //   [(KeyCode::D, Vec2::X),
+  //    (KeyCode::A, Vec2::NEG_X),
+  //    (KeyCode::W, Vec2::Y),
+  //    (KeyCode::S, Vec2::NEG_Y)].into_iter()
+  //                              .filter_map(|(k, v)| keyboard_input.pressed(k).then_some(v))
+  //                              .sum::<Vec2>();
+  // if dir != Vec2::ZERO {
+  //   movement_event_writer.send(MoveHorizontallyAction(dir.normalize()));
+  // }
+  // if keyboard_input.just_pressed(KeyCode::Space) {
+  //   jump_event_writer.send(JumpAction);
+  // }
 }
 pub struct MyInputPlugin;
 impl Plugin for MyInputPlugin {
@@ -91,7 +65,7 @@ fn log_inputs(keys: Res<Input<KeyCode>>) {
 // pub fn keylogger(app: &mut App) { app.add_systems(log_inputs); }
 
 use {bevy::{prelude::*, utils::HashMap},
-     bevy_xpbd_3d::math::Vector2};
+     bevy_rapier3d::prelude::Velocity};
 
 comment! {
 #[derive(Resource, Default)]
