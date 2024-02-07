@@ -66,42 +66,39 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
     // }
     let vels_of_entities_colliding_with_player =
       velq.iter_many(entities_colliding_with_player)
-          .map(|ov| ov.copied().unwrap_or_default());
+          .map(|ov| ov.copied().unwrap_or_default().linvel);
     let avg_vel_of_entities_colliding_with_player =
-      avg(vels_of_entities_colliding_with_player.map(|lv| lv.linvel));
+      avg(vels_of_entities_colliding_with_player);
     // let avg_vel_of_entities_colliding_with_player = Some(Vec3::ZERO);
-    // if grounded
     // let is_grounded = true;
     let is_grounded = avg_vel_of_entities_colliding_with_player.is_some();
+    let right = cam_transform.right().normalize();
+    let forward = -(right.cross(Vec3::Y).normalize_or_zero());
+    let dir =
+      [(KeyCode::D, Vec2::X),
+       (KeyCode::A, Vec2::NEG_X),
+       (KeyCode::W, Vec2::Y),
+       (KeyCode::S, Vec2::NEG_Y)].into_iter()
+                                 .filter_map(|(k, v)| keyboard_input.pressed(k).then_some(v))
+                                 .sum::<Vec2>()
+                                 .normalize_or_zero();
+    let Vec2 { x, y } = dir;
+    // if grounded
     player_force.force = if let Some(avgvel) = avg_vel_of_entities_colliding_with_player {
-      {
-        let right = cam_transform.right().normalize();
-        let forward = -(right.cross(Vec3::Y).normalize_or_zero());
-        let relvel = player_vel.linvel - avgvel;
-        let relspeed = relvel.length();
-        let dir = [(KeyCode::D, Vec2::X),
-                   (KeyCode::A, Vec2::NEG_X),
-                   (KeyCode::W, Vec2::Y),
-                   (KeyCode::S, Vec2::NEG_Y)].into_iter()
-                                             .filter_map(|(k, v)| {
-                                               keyboard_input.pressed(k).then_some(v)
-                                             })
-                                             .sum::<Vec2>()
-                                             .normalize_or_zero();
-        let Vec2 { x, y } = dir;
-        let desired_force = (right * x + forward * y) * PLAYER_WALK_FORCE;
-        if relspeed < 0.1 {
-          desired_force
+      let relvel = player_vel.linvel - avgvel;
+      let relspeed = relvel.length();
+      let desired_force = (right * x + forward * y) * PLAYER_WALK_FORCE;
+      if relspeed < 0.1 {
+        desired_force
+      } else {
+        let desired_parallel = desired_force.project_onto(relvel);
+        let desired_perpendicular = desired_force - desired_parallel;
+        let desired_parallel_bounded = if desired_parallel.dot(relvel).is_sign_positive() {
+          desired_parallel * (1.0 - relspeed / player_max_speed)
         } else {
-          let desired_parallel = desired_force.project_onto(relvel);
-          let desired_perpendicular = desired_force - desired_parallel;
-          let desired_parallel_bounded = if desired_parallel.dot(relvel).is_sign_positive() {
-            desired_parallel * (1.0 - relspeed / player_max_speed)
-          } else {
-            desired_parallel
-          };
-          desired_parallel_bounded + desired_perpendicular
-        }
+          desired_parallel
+        };
+        desired_parallel_bounded + desired_perpendicular
       }
     } else {
       Vec3::ZERO

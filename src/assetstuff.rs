@@ -66,6 +66,7 @@ pub struct AllMyAssetHandles {
   pub mushroom_man: Handle<Image>,
   pub tree: Handle<Image>,
   pub iceberg: Handle<Image>,
+  pub stickman: Handle<Image>,
   pub coffee: Handle<Image>,
   pub snow_image: Handle<Image>,
   pub snow_material: Handle<StandardMaterial>,
@@ -110,6 +111,7 @@ impl Plugin for AssetStuffPlugin {
       stone, "stone.png"
       iceberg, "iceberg.png"
       coffee, "coffee.png"
+      stickman, "stickman.png"
       grass, "grass.png"
       water, "water.png"
       tree, "tree.png"

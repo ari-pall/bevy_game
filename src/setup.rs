@@ -197,7 +197,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
         ),
                          (
           crate::components::IsPlayerSprite,
-          GibSpriteBundle(Sprite3d { image: amah.penguin_image.clone(),
+          GibSpriteBundle(Sprite3d { image: amah.stickman.clone(),
                                      pixels_per_metre: 19.0,
                                      ..default() }),
         ),
