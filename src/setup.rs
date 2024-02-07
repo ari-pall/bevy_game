@@ -6,30 +6,6 @@ use {crate::{assetstuff::AllMyAssetHandles,
      bevy_sprite3d::Sprite3d,
      bevy_third_person_camera::{ThirdPersonCamera, ThirdPersonCameraTarget},
      rust_utils::comment};
-
-// // Environment (see `async_colliders` example for creating colliders from scenes)
-// c.spawn((
-//   SceneBundle {
-//     scene: amah.island_level_scene.clone(),
-//     transform: Transform::from_scale(Vec3::ONE * 20.0)
-//       .with_translation(Vec3::NEG_ONE * 20.0),
-//     ..default()
-//   },
-//   AsyncSceneCollider::new(Some(ComputedCollider::ConvexDecomposition(
-//     VHACDParameters { ..default() },
-//   ))),
-//   RigidBody::Static,
-// ));
-// pub fn iceberg(center: Vec3, speed: f32, amah: &AllMyAssetHandles) -> impl Bundle {
-//   (RigidBody::Kinematic,
-//    Friction::default(),
-//    SegmentPathMotion::circular_motion(center, 15.0, speed),
-//    AsyncCollider(ComputedCollider::ConvexHull),
-//    PbrBundle { mesh: amah.flatbox.clone(),
-//                material: amah.snow_material.clone(),
-//                transform: Transform::from_translation(center),
-//                ..default() })
-// }
 pub fn spawn_with_child(c: &mut Commands, a: impl Bundle, b: impl Bundle) {
   c.spawn(a).with_children(|x| {
               x.spawn(b);
@@ -64,6 +40,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   let iceberg = |mut spm: SegmentPathMotion| {
     (RigidBody::KinematicVelocityBased,
      Velocity::default(),
+     // Velocity::angular(Vec3::Y * ((rand::random::<f32>() - 0.5) * 0.1)),
      Friction::default(),
      AsyncCollider(ComputedColliderShape::ConvexHull),
      PbrBundle { mesh: amah.flatbox.clone(),
@@ -80,7 +57,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   spawn!(circle_iceberg(vec3(0.0, -6.0, 0.0), 12.0, 1.3));
   spawn!(circle_iceberg(vec3(0.0, -6.0, 0.0), 9.0, 1.3));
   spawn!(circle_iceberg(vec3(0.0, -6.0, 0.0), 6.0, 1.3));
-  spawn!(circle_iceberg(vec3(0.0, -6.0, 0.0), 0.0, 1.3));
+  // spawn!(circle_iceberg(vec3(0.0, -6.0, 0.0), 0.0, 1.3));
 
   let up_down_iceberg = |origin: Vec3, height: f32, speed: f32| {
     iceberg(SegmentPathMotion::new([origin, origin + Vec3::Y * height], speed))
@@ -152,6 +129,9 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
     let block = |material: Handle<StandardMaterial>| {
       (RigidBody::Fixed,
        Friction::default(),
+       Velocity::default(),
+       // ActiveCollisionTypes::DYNAMIC_STATIC,
+       // Collider::cuboid(0.5, 0.5, 0.5),
        AsyncCollider(ComputedColliderShape::ConvexHull),
        MaterialMeshBundle { mesh: amah.unitcube.clone(),
                             material,
@@ -180,32 +160,48 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
         let player_collider = Collider::capsule_y(player_height / 2.0, player_radius);
         // let player_density = 1.0;
         let player_mass = 0.3;
-        // let player_shape_caster = ShapeCaster::new(player_collider.clone(),
-        //                                            Vec3::ZERO,
-        //                                            Quat::IDENTITY,
-        //                                            Vec3::NEG_Y).with_max_time_of_impact(0.3)
-        //                                                        .with_max_hits(5);
-        spawn_with_child(&mut c,
-                         (Player { speed_boost: 0.0,
-                                   jump_charge_level: None },
-                          ColliderMassProperties::Mass(player_mass),
-                          Friction { combine_rule: CoefficientCombineRule::Multiply,
-                                     coefficient: player_friction },
-                          Restitution { coefficient: 0.0,
-                                        combine_rule: CoefficientCombineRule::Multiply },
-                          ExternalForce::default(),
-                          ExternalImpulse::default(),
-                          Velocity::default(),
-                          RigidBody::Dynamic,
-                          ThirdPersonCameraTarget,
-                          LockedAxes::ROTATION_LOCKED,
-                          SpatialBundle::from_transform(transform),
-                          player_collider,
-                          // player_shape_caster
-                         ),
-                         GibSpriteBundle(Sprite3d { image: amah.penguin_image.clone(),
-                                                    pixels_per_metre: 19.0,
-                                                    ..default() }))
+        // RapierContext
+        // QueryPipeline::intersections_with_shape()
+        // TnuaSimpleAirActionsCounter
+        // let player_tnua_controller_bundle =
+        //   TnuaControllerBundle { controller: TnuaController::default(),
+        //                          motor: TnuaMotor::default(),
+        //                          rigid_body_tracker: TnuaRigidBodyTracker::default(),
+        //                          proximity_sensor: TnuaProximitySensor::default() };
+        // ReadMassProperties
+        // CollisionPipeline
+        // ActiveEvents
+        spawn_with_child(
+                         &mut c,
+                         (
+          Player { speed_boost: 0.0,
+                   jump_charge_level: None, },
+          ColliderMassProperties::Mass(player_mass),
+          Friction { combine_rule: CoefficientCombineRule::Multiply,
+                     coefficient: player_friction, },
+          Restitution { coefficient: 0.0,
+                        combine_rule: CoefficientCombineRule::Multiply, },
+          ExternalImpulse::default(),
+          ExternalForce::default(),
+          Velocity::default(),
+          RigidBody::Dynamic,
+          ThirdPersonCameraTarget,
+          LockedAxes::ROTATION_LOCKED,
+          SpatialBundle::from_transform(transform),
+          player_collider,
+          // ActiveCollisionTypes::DYNAMIC_STATIC,
+          // player_shape_caster
+          // bevy_tnua::prelude::TnuaControllerBundle::default(),
+          // player_tnua_controller_bundle,
+          // bevy_tnua_rapier3d::TnuaRapier3dIOBundle::default()
+        ),
+                         (
+          crate::components::IsPlayerSprite,
+          GibSpriteBundle(Sprite3d { image: amah.penguin_image.clone(),
+                                     pixels_per_metre: 19.0,
+                                     ..default() }),
+        ),
+        )
       }
       't' => spawn!((RigidBody::Fixed,
                      Collider::capsule_y(0.6, 0.2),

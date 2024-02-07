@@ -35,7 +35,6 @@ dist = {inherits = "release", lto = "thin"}
 rust_utils = {path = "../rust_utils"}
 # bevy_utils = {path = "../bevy_utils"}
 aery = "0.5"
-# bevy_xpbd_3d = "*"
 bevy_third_person_camera = "*"
 rand = "*"
 bevy_sprite3d = "*"
@@ -65,3 +64,6 @@ bevy = { version = "*", default-features = false, features = [
     "default_font",
     "webgl2",
 ] }
+iter-comprehensions = "*"
+bevy-tnua-rapier3d = "*"
+bevy-tnua = "*"

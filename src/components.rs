@@ -20,6 +20,8 @@ pub struct DragonAttack;
 pub struct RandomMovement;
 #[derive(Component, Clone)]
 pub struct EnemyMovement;
+#[derive(Component, Clone)]
+pub struct IsPlayerSprite;
 #[derive(Component, Clone, Debug)]
 pub struct Player {
   pub speed_boost: f32,

@@ -62,6 +62,8 @@ pub fn main() {
     assetstuff::AssetStuffPlugin,
     ThirdPersonCameraPlugin,
     // Aery,
+    bevy_tnua_rapier3d::TnuaRapier3dPlugin,
+    bevy_tnua::prelude::TnuaControllerPlugin,
     bevy_sprite3d::Sprite3dPlugin,
     bevy_rapier3d::prelude::RapierPhysicsPlugin::<NoUserData>::default(),
     input::MyInputPlugin, // game::game_plugin,
