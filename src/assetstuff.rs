@@ -68,6 +68,8 @@ pub struct AllMyAssetHandles {
   pub iceberg: Handle<Image>,
   pub stickman: Handle<Image>,
   pub coffee: Handle<Image>,
+  pub coffee_vox: Handle<Scene>,
+  pub coffee_gltf: Handle<Scene>,
   pub snow_image: Handle<Image>,
   pub snow_material: Handle<StandardMaterial>,
   pub grass: Handle<Image>,
@@ -106,11 +108,13 @@ impl Plugin for AssetStuffPlugin {
       island_level_scene, "this_here_level.glb", "Scene0"
       some_sketch_level, "somesketchlevel.glb", "Scene0"
       snowman, "snowman.glb", "Scene0"
+      coffee_gltf, "coffee.gltf", "Scene0"
     }
     asset_paths! {
       stone, "stone.png"
       iceberg, "iceberg.png"
       coffee, "coffee.png"
+      coffee_vox, "coffee.vox"
       stickman, "stickman.png"
       grass, "grass.png"
       water, "water.png"

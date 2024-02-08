@@ -1,3 +1,9 @@
+use std::f32::consts::PI;
+
+use rust_utils::MutateTrait;
+
+use crate::components::SpinningAnimation;
+
 use {crate::{assetstuff::AllMyAssetHandles,
              components::{GibSpriteBundle, ItemPickUp, Player},
              jumpy_penguin::SegmentPathMotion},
@@ -209,11 +215,24 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                 transform,
                                                 pixels_per_metre: 12.0,
                                                 ..default() }))),
-      'C' => spawn!((ItemPickUp::SpeedBoost,
-                     GibSpriteBundle(Sprite3d { image: amah.coffee.clone(),
-                                                transform,
-                                                pixels_per_metre: 18.0,
-                                                ..default() }))),
+      'C' => {
+        let coffee_transform = transform.with_scale(Vec3::ONE * 0.1);
+        spawn!((ItemPickUp::SpeedBoost,
+                // transform,
+                // GibSpriteBundle(Sprite3d { image: amah.coffee.clone(),
+                //                            transform,
+                //                            pixels_per_metre: 18.0,
+                //                            ..default() })
+                SpinningAnimation { rotation_steps: 230,
+                                    rotation_step: 0,
+                                    up_down_steps: 320,
+                                    up_down_step: 0,
+                                    original_transform: coffee_transform,
+                                    up_down_distance: 0.5 },
+                SceneBundle { scene: amah.coffee_gltf.clone(),
+                              transform: coffee_transform,
+                              ..default() }))
+      }
       'L' => spawn!((RigidBody::Dynamic,
                      ColliderMassProperties::Density(1.0),
                      // MassPropertiesBundle::default(),

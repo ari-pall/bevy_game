@@ -1,6 +1,6 @@
 use {crate::{assetstuff::AllMyAssetHandles,
              components::{GibSpriteBundle, IsPlayerSprite, ItemPickUp, Player,
-                          PlayerFollower},
+                          PlayerFollower, SpinningAnimation},
              setup::spawn_with_child},
      bevy::prelude::*,
      bevy_rapier3d::prelude::*,
@@ -195,7 +195,7 @@ pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
                          .distance(item_transform.translation)
          < PICKUPDISTANCE
       {
-        c.entity(item).despawn();
+        c.entity(item).despawn_recursive();
         match item_pick_up {
           ItemPickUp::SpeedBoost => {
             player.speed_boost += SPEEDBOOSTAMOUNT;
@@ -204,5 +204,28 @@ pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
         }
       }
     }
+  }
+}
+pub fn spinning_animation(mut q: Query<(&mut Transform, &mut SpinningAnimation)>) {
+  for (mut t, mut sa) in &mut q {
+    let SpinningAnimation { original_transform,
+                            rotation_steps,
+                            rotation_step,
+                            up_down_steps,
+                            up_down_step,
+                            up_down_distance, } = *sa;
+
+    let rotation_angle_radians =
+      (rotation_step as f32 / rotation_steps as f32) * std::f32::consts::TAU;
+    t.rotation = Quat::from_rotation_y(rotation_angle_radians);
+
+    let sine_offset =
+      ((up_down_step as f32 / up_down_steps as f32) * std::f32::consts::TAU).sin()
+      * up_down_distance;
+    t.translation.y = original_transform.translation.y + sine_offset;
+
+    *sa = SpinningAnimation { rotation_step: (rotation_step + 1) % rotation_steps,
+                              up_down_step: (up_down_step + 1) % up_down_steps,
+                              ..*sa };
   }
 }

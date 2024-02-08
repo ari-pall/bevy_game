@@ -59,6 +59,7 @@ pub fn main() {
                        ..default()}),
                     ..default()
                   }),
+    bevy_vox::VoxPlugin::default(),
     assetstuff::AssetStuffPlugin,
     ThirdPersonCameraPlugin,
     // Aery,
@@ -83,6 +84,7 @@ pub fn main() {
                           update::item_pick_up,
                           update::spawn_mushroom_man,
                           update::player_follower,
+                          update::spinning_animation,
                           bevy::window::close_on_esc,
                           jumpy_penguin::segment_path_motion))
             .run();

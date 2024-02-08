@@ -21,6 +21,15 @@ pub struct RandomMovement;
 #[derive(Component, Clone)]
 pub struct EnemyMovement;
 #[derive(Component, Clone)]
+pub struct SpinningAnimation {
+  pub original_transform: Transform,
+  pub rotation_steps: u32,
+  pub rotation_step: u32,
+  pub up_down_steps: u32,
+  pub up_down_step: u32,
+  pub up_down_distance: f32,
+}
+#[derive(Component, Clone)]
 pub struct IsPlayerSprite;
 #[derive(Component, Clone, Debug)]
 pub struct Player {
