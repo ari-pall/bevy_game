@@ -1,11 +1,5 @@
-use std::f32::consts::PI;
-
-use rust_utils::MutateTrait;
-
-use crate::components::SpinningAnimation;
-
 use {crate::{assetstuff::AllMyAssetHandles,
-             components::{GibSpriteBundle, ItemPickUp, Player},
+             components::{GibSpriteBundle, ItemPickUp, Player, SpinningAnimation},
              jumpy_penguin::SegmentPathMotion},
      bevy::{core_pipeline, math::vec3, prelude::*},
      bevy_rapier3d::prelude::*,
