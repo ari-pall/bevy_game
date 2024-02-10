@@ -5,7 +5,8 @@ use {crate::{assetstuff::AllMyAssetHandles,
      bevy::prelude::*,
      bevy_rapier3d::prelude::*,
      bevy_sprite3d::{Sprite3d, Sprite3dComponent, Sprite3dParams},
-     rust_utils::vec};
+     rust_utils::vec,
+     std::f32::consts::TAU};
 fn avg<T: std::iter::Sum + std::ops::Div<f32, Output = T>>(coll: impl IntoIterator<Item = T>)
                                                            -> Option<T> {
   let v = vec(coll);
@@ -16,15 +17,13 @@ fn avg<T: std::iter::Sum + std::ops::Div<f32, Output = T>>(coll: impl IntoIterat
 // use bevy_tnua
 // use bevy_tnua_rapier3d::TnuaRapier3dIOBundle
 // use bevy_tnua
-const PLAYER_WALK_FORCE: f32 = 10.0;
-const PLAYER_MAX_SPEED: f32 = 13.0;
+const PLAYER_WALK_FORCE: f32 = 6.0;
+const PLAYER_MAX_SPEED: f32 = 11.0;
 const PLAYER_MIN_JUMP_IMPULSE: f32 = 1.2;
 const PLAYER_MAX_JUMP_IMPULSE: f32 = 2.9;
 const PLAYER_JUMP_CHARGE_LEVEL_MAX: u16 = 130;
 pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
                        camq: Query<&Transform, With<Camera3d>>,
-                       // mut transformsq: Query<&mut Transform,
-                       //       (Without<Camera3d>, Without<Player>)>,
                        rapier_context: Res<RapierContext>,
                        velq: Query<Option<&Velocity>, Without<Player>>,
                        mut player_sprite_transform_q: Query<&mut Transform,
@@ -81,13 +80,15 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
        (KeyCode::S, Vec2::NEG_Y)].into_iter()
                                  .filter_map(|(k, v)| keyboard_input.pressed(k).then_some(v))
                                  .sum::<Vec2>()
-                                 .normalize_or_zero();
-    let Vec2 { x, y } = dir;
+                                 .try_normalize();
     // if grounded
     player_force.force = if let Some(avgvel) = avg_vel_of_entities_colliding_with_player {
       let relvel = player_vel.linvel - avgvel;
       let relspeed = relvel.length();
-      let desired_force = (right * x + forward * y) * PLAYER_WALK_FORCE;
+      let desired_force = match dir {
+        Some(Vec2 { x, y }) => (right * x + forward * y) * PLAYER_WALK_FORCE,
+        None => relvel * (-1.3)
+      };
       if relspeed < 0.1 {
         desired_force
       } else {
@@ -112,14 +113,11 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
                                      * charge_fraction));
     }
     player.jump_charge_level =
-      keyboard_input.pressed(KeyCode::Space).then_some({
-                                              if let Some(n) = player.jump_charge_level {
-                                                (n + 1).min(PLAYER_JUMP_CHARGE_LEVEL_MAX)
-                                              } else {
-                                                0
-                                              }
-                                            });
-
+      match (keyboard_input.pressed(KeyCode::Space), player.jump_charge_level) {
+        (false, _) => None,
+        (true, None) => Some(0),
+        (true, Some(n)) => Some(PLAYER_JUMP_CHARGE_LEVEL_MAX.min(n + 1))
+      };
     if let Ok(mut player_sprite_transform) = player_sprite_transform_q.get_single_mut() {
       player_sprite_transform.scale.y = 1.0 - (charge_fraction * 0.3);
       player_sprite_transform.translation.y = (-charge_fraction) * 0.2;
@@ -185,7 +183,7 @@ pub fn player_follower(mut followerq: Query<(&mut ExternalForce, &Transform),
   }
 }
 const PICKUPDISTANCE: f32 = 0.6;
-const SPEEDBOOSTAMOUNT: f32 = 5.0;
+const SPEEDBOOSTAMOUNT: f32 = 8.0;
 pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
                     itemsq: Query<(Entity, &Transform, &ItemPickUp)>,
                     mut c: Commands) {
@@ -200,7 +198,7 @@ pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
           ItemPickUp::SpeedBoost => {
             player.speed_boost += SPEEDBOOSTAMOUNT;
           }
-          ItemPickUp::HealthBoost(_) => todo!(),
+          ItemPickUp::HealthBoost(_) => todo!()
         }
       }
     }
@@ -213,19 +211,16 @@ pub fn spinning_animation(mut q: Query<(&mut Transform, &mut SpinningAnimation)>
                             rotation_step,
                             up_down_steps,
                             up_down_step,
-                            up_down_distance, } = *sa;
+                            up_down_distance } = *sa;
 
-    let rotation_angle_radians =
-      (rotation_step as f32 / rotation_steps as f32) * std::f32::consts::TAU;
+    let rotation_angle_radians = (rotation_step as f32 / rotation_steps as f32) * TAU;
     t.rotation = Quat::from_rotation_y(rotation_angle_radians);
 
     let sine_offset =
-      ((up_down_step as f32 / up_down_steps as f32) * std::f32::consts::TAU).sin()
-      * up_down_distance;
+      ((up_down_step as f32 / up_down_steps as f32) * TAU).sin() * up_down_distance;
     t.translation.y = original_transform.translation.y + sine_offset;
 
-    *sa = SpinningAnimation { rotation_step: (rotation_step + 1) % rotation_steps,
-                              up_down_step: (up_down_step + 1) % up_down_steps,
-                              ..*sa };
+    sa.rotation_step = (rotation_step + 1) % rotation_steps;
+    sa.up_down_step = (up_down_step + 1) % up_down_steps;
   }
 }

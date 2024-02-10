@@ -68,7 +68,6 @@ pub struct AllMyAssetHandles {
   pub iceberg: Handle<Image>,
   pub stickman: Handle<Image>,
   pub coffee: Handle<Image>,
-  pub coffee_vox: Handle<Scene>,
   pub coffee_gltf: Handle<Scene>,
   pub snow_image: Handle<Image>,
   pub snow_material: Handle<StandardMaterial>,
@@ -114,7 +113,6 @@ impl Plugin for AssetStuffPlugin {
       stone, "stone.png"
       iceberg, "iceberg.png"
       coffee, "coffee.png"
-      coffee_vox, "coffee.vox"
       stickman, "stickman.png"
       grass, "grass.png"
       water, "water.png"
@@ -166,9 +164,7 @@ impl Plugin for AssetStuffPlugin {
       particle_mesh, Mesh::try_from(shape::Icosphere { radius: 0.06 as f32,
                                                       ..default() }).unwrap()
     }
-    app.insert_resource(amah)
-       // .add_systems(Update, set_asset_handles)
-      ;
+    app.insert_resource(amah);
   }
 }
 comment! {

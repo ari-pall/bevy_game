@@ -105,7 +105,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                               cursor_lock_active: false,
                               mouse_sensitivity: 1.7,
                               zoom: bevy_third_person_camera::Zoom::new(1.2, 13.0),
-                              zoom_sensitivity: 0.2,
+                              zoom_sensitivity: 0.1,
                               ..default() }));
   // .insert(bevy::pbr::ScreenSpaceAmbientOcclusionBundle::default())
   // .insert(bevy::core_pipeline::experimental::taa::TemporalAntiAliasBundle::default())
@@ -156,7 +156,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
       'p' => {
         let player_height = 0.75;
         let player_radius = 0.3;
-        let player_friction = 4.0;
+        let player_friction = 1.0;
         let player_collider = Collider::capsule_y(player_height / 2.0, player_radius);
         // let player_density = 1.0;
         let player_mass = 0.3;
@@ -168,19 +168,17 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
         //                          motor: TnuaMotor::default(),
         //                          rigid_body_tracker: TnuaRigidBodyTracker::default(),
         //                          proximity_sensor: TnuaProximitySensor::default() };
-        // ReadMassProperties
-        // CollisionPipeline
-        // ActiveEvents
         spawn_with_child(
                          &mut c,
                          (
           Player { speed_boost: 0.0,
-                   jump_charge_level: None, },
+                   jump_charge_level: None },
           ColliderMassProperties::Mass(player_mass),
           Friction { combine_rule: CoefficientCombineRule::Multiply,
-                     coefficient: player_friction, },
+                     coefficient: player_friction },
           Restitution { coefficient: 0.0,
-                        combine_rule: CoefficientCombineRule::Multiply, },
+
+                        combine_rule: CoefficientCombineRule::Multiply },
           ExternalImpulse::default(),
           ExternalForce::default(),
           Velocity::default(),
@@ -188,19 +186,18 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           ThirdPersonCameraTarget,
           LockedAxes::ROTATION_LOCKED,
           SpatialBundle::from_transform(transform),
-          player_collider,
-          // ActiveCollisionTypes::DYNAMIC_STATIC,
-          // player_shape_caster
-          // bevy_tnua::prelude::TnuaControllerBundle::default(),
-          // player_tnua_controller_bundle,
-          // bevy_tnua_rapier3d::TnuaRapier3dIOBundle::default()
+          player_collider // ActiveCollisionTypes::DYNAMIC_STATIC,
+                          // player_shape_caster
+                          // bevy_tnua::prelude::TnuaControllerBundle::default(),
+                          // player_tnua_controller_bundle,
+                          // bevy_tnua_rapier3d::TnuaRapier3dIOBundle::default()
         ),
                          (
           crate::components::IsPlayerSprite,
           GibSpriteBundle(Sprite3d { image: amah.stickman.clone(),
                                      pixels_per_metre: 19.0,
-                                     ..default() }),
-        ),
+                                     ..default() })
+        )
         )
       }
       't' => spawn!((RigidBody::Fixed,
@@ -217,12 +214,12 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                 //                            transform,
                 //                            pixels_per_metre: 18.0,
                 //                            ..default() })
-                SpinningAnimation { rotation_steps: 230,
+                SpinningAnimation { rotation_steps: 430,
                                     rotation_step: 0,
-                                    up_down_steps: 320,
+                                    up_down_steps: 520,
                                     up_down_step: 0,
                                     original_transform: coffee_transform,
-                                    up_down_distance: 0.5 },
+                                    up_down_distance: 0.3 },
                 SceneBundle { scene: amah.coffee_gltf.clone(),
                               transform: coffee_transform,
                               ..default() }))
@@ -244,8 +241,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                                    true,
                                                                  ..default() },
                                        ..default() }),
-      _ => (),
-      // _ => panic!("{:?}, {tile}", coords),
+      _ => () // _ => panic!("{:?}, {tile}", coords),
     }
   }
 }

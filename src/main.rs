@@ -59,7 +59,7 @@ pub fn main() {
                        ..default()}),
                     ..default()
                   }),
-    bevy_vox::VoxPlugin::default(),
+    // bevy_vox::VoxPlugin::default(),
     assetstuff::AssetStuffPlugin,
     ThirdPersonCameraPlugin,
     // Aery,

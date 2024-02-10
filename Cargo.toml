@@ -67,4 +67,4 @@ bevy = { version = "*", default-features = false, features = [
 iter-comprehensions = "*"
 bevy-tnua-rapier3d = "*"
 bevy-tnua = "*"
-bevy_vox = "0.8.1"
+# bevy_vox = "0.8.1"
