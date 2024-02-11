@@ -1,7 +1,5 @@
-use bevy::pbr::NotShadowReceiver;
-
 use {bevy::{asset::embedded_asset,
-            gltf::{Gltf, GltfMesh},
+            gltf::Gltf,
             prelude::*,
             render::render_resource::{Extent3d, TextureDimension, TextureFormat}},
      rust_utils::{comment, map}};
@@ -37,6 +35,8 @@ fn colorful_texture() -> Image {
                                                                       .as_slice(),
                   TextureFormat::Rgba8UnormSrgb)
 }
+pub const GLOWY_COLOR: Color = Color::rgb_linear(13.99, 11.32, 50.0);
+pub const GLOWY_COLOR_2: Color = Color::rgb_linear(10.0, 0.3, 0.0);
 #[derive(Resource, Default)]
 pub struct AllMyAssetHandles {
   pub cube: Handle<Mesh>,
@@ -54,6 +54,7 @@ pub struct AllMyAssetHandles {
   pub particle_material: Handle<StandardMaterial>,
   pub funky_material: Handle<StandardMaterial>,
   pub glowy_material: Handle<StandardMaterial>,
+  pub glowy_material_2: Handle<StandardMaterial>,
   pub colorful_material: Handle<StandardMaterial>,
   pub character_controller_demo_scene_gltf: Handle<Gltf>,
   pub wat: Handle<Gltf>,
@@ -149,7 +150,10 @@ impl Plugin for AssetStuffPlugin {
       funky_material, StandardMaterial::from(funky_image.clone())
       glowy_material, StandardMaterial { unlit: true,
                                          alpha_mode: AlphaMode::Mask(0.0),
-                                         ..Color::rgba_linear(13.99, 11.32, 50.0, 0.5).into() }
+                                         ..GLOWY_COLOR.into() }
+      glowy_material_2, StandardMaterial { unlit: true,
+                                           alpha_mode: AlphaMode::Mask(0.0),
+                                           ..GLOWY_COLOR_2.into() }
       water_material, StandardMaterial { perceptual_roughness:0.3,
                                          base_color: Color::SEA_GREEN,
                                          metallic:0.0,

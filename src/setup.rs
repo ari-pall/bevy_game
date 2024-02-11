@@ -1,11 +1,10 @@
-use bevy::{core_pipeline::bloom::BloomSettings,
-           pbr::{NotShadowCaster, NotShadowReceiver},
-           render::primitives::CubemapFrusta};
-
-use {crate::{assetstuff::AllMyAssetHandles,
+use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2},
              components::{GibSpriteBundle, ItemPickUp, Player, SpinningAnimation},
              jumpy_penguin::SegmentPathMotion},
-     bevy::{core_pipeline, math::vec3, prelude::*},
+     bevy::{core_pipeline::{self, bloom::BloomSettings},
+            math::vec3,
+            pbr::NotShadowCaster,
+            prelude::*},
      bevy_rapier3d::prelude::*,
      bevy_sprite3d::Sprite3d,
      bevy_third_person_camera::{ThirdPersonCamera, ThirdPersonCameraTarget},
@@ -166,6 +165,25 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                  material: amah.colorful_material.clone(),
                                  transform,
                                  ..default() })),
+      'b' => {
+        spawn!((RigidBody::Dynamic,
+                Restitution { coefficient: 0.97,
+                              combine_rule: CoefficientCombineRule::Max },
+                ColliderMassProperties::Density(1.0),
+                NotShadowCaster,
+                // MassPropertiesBundle::default(),
+                AsyncCollider(ComputedColliderShape::ConvexHull),
+                PbrBundle { mesh: amah.uvsphere.clone(),
+                            material: amah.glowy_material_2.clone(),
+                            transform: transform.with_scale(Vec3::ONE * 0.4),
+                            ..default() }),
+               PointLightBundle { point_light: PointLight { intensity: 200.0,
+                                                            radius: 0.4,
+                                                            shadows_enabled: true,
+                                                            color: GLOWY_COLOR_2,
+                                                            ..default() },
+                                  ..default() })
+      }
       'p' => {
         let player_height = 0.75;
         let player_radius = 0.3;
@@ -247,17 +265,14 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                    transform,
                                    ..default() })),
       'l' => {
-        spawn!((PointLightBundle { transform,
-                                   point_light: PointLight { intensity: 500.0,
-                                                             radius: 1.0,
-                                                             shadows_enabled: true,
-                                                             color:
-                                                               Color::rgba_linear(13.99,
-                                                                                  11.32,
-                                                                                  50.0, 0.5),
-                                                             ..default() },
-                                   ..default() }),
-               (PbrBundle { mesh: amah.icosphere.clone(),
+        spawn!(PointLightBundle { transform,
+                                  point_light: PointLight { intensity: 500.0,
+                                                            radius: 1.0,
+                                                            shadows_enabled: true,
+                                                            color: GLOWY_COLOR,
+                                                            ..default() },
+                                  ..default() },
+               (PbrBundle { mesh: amah.uvsphere.clone(),
                             material: amah.glowy_material.clone(),
                             ..default() },
                 NotShadowCaster,
