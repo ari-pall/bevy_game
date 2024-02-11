@@ -37,6 +37,7 @@ fn colorful_texture() -> Image {
 }
 pub const GLOWY_COLOR: Color = Color::rgb_linear(13.99, 11.32, 50.0);
 pub const GLOWY_COLOR_2: Color = Color::rgb_linear(10.0, 0.3, 0.0);
+pub const GLOWY_COLOR_3: Color = Color::rgb_linear(0.0, 30.0, 0.0);
 #[derive(Resource, Default)]
 pub struct AllMyAssetHandles {
   pub cube: Handle<Mesh>,
@@ -55,6 +56,7 @@ pub struct AllMyAssetHandles {
   pub funky_material: Handle<StandardMaterial>,
   pub glowy_material: Handle<StandardMaterial>,
   pub glowy_material_2: Handle<StandardMaterial>,
+  pub glowy_material_3: Handle<StandardMaterial>,
   pub colorful_material: Handle<StandardMaterial>,
   pub character_controller_demo_scene_gltf: Handle<Gltf>,
   pub wat: Handle<Gltf>,
@@ -130,9 +132,9 @@ impl Plugin for AssetStuffPlugin {
       character_controller_demo_scene_gltf, "character_controller_demo.glb"
     }
 
-    // StandardMaterial { unlit: true,
-    //                    alpha_mode: AlphaMode::Mask(0.0),
-    //                    ..Color::rgba_linear(13.99, 5.32, 20.0, 0.5).into() };
+    StandardMaterial { unlit: true,
+                       alpha_mode: AlphaMode::Mask(0.0),
+                       ..GLOWY_COLOR_3.into() };
     assets! {
       unitcube, shape::Cube { size: 1.0 }.into()
       cube, shape::Cube { size: 0.7 }.into()
@@ -154,6 +156,9 @@ impl Plugin for AssetStuffPlugin {
       glowy_material_2, StandardMaterial { unlit: true,
                                            alpha_mode: AlphaMode::Mask(0.0),
                                            ..GLOWY_COLOR_2.into() }
+      glowy_material_3, StandardMaterial { unlit: true,
+                                           alpha_mode: AlphaMode::Mask(0.0),
+                                           ..GLOWY_COLOR_3.into() }
       water_material, StandardMaterial { perceptual_roughness:0.3,
                                          base_color: Color::SEA_GREEN,
                                          metallic:0.0,

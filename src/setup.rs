@@ -1,3 +1,7 @@
+use bevy::pbr::LightEntity;
+
+use crate::{assetstuff::GLOWY_COLOR_3, components::name};
+
 use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2},
              components::{GibSpriteBundle, ItemPickUp, Player, SpinningAnimation},
              jumpy_penguin::SegmentPathMotion},
@@ -280,6 +284,28 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                 Friction::default(),
                 Velocity::default(),
                 AsyncCollider(ComputedColliderShape::ConvexHull)))
+      }
+      'd' => {
+        spawn!((RigidBody::Dynamic,
+                ColliderMassProperties::Density(1.0),
+                NotShadowCaster,
+                // MassPropertiesBundle::default(),
+                AsyncCollider(ComputedColliderShape::ConvexHull),
+                name("uranium cube"),
+                Restitution { coefficient: 0.9,
+                              combine_rule: CoefficientCombineRule::Max },
+                Friction { coefficient: 0.2,
+                           combine_rule: CoefficientCombineRule::Multiply },
+                PbrBundle { mesh: amah.cube.clone(),
+                            material: amah.glowy_material_3.clone(),
+                            transform,
+                            ..default() }),
+               PointLightBundle { point_light: PointLight { intensity: 300.0,
+                                                            radius: 0.4,
+                                                            shadows_enabled: true,
+                                                            color: GLOWY_COLOR_3,
+                                                            ..default() },
+                                  ..default() })
       }
       _ => () // _ => panic!("{:?}, {tile}", coords),
     }
