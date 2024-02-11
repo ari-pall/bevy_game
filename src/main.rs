@@ -42,6 +42,7 @@ pub mod update;
 pub fn main() {
   App::new().init_resource::<state::StateStuff>()
             .add_plugins((
+              // bevy::pbr::ScreenSpaceAmbientOcclusionPlugin
     DefaultPlugins.set(ImagePlugin::default_nearest())
                   .set(WindowPlugin {
                     primary_window: Some(Window {

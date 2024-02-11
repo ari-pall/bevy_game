@@ -247,22 +247,24 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                    transform,
                                    ..default() })),
       'l' => {
-        spawn!((RigidBody::Fixed,
-                Friction::default(),
-                Velocity::default(),
-                AsyncCollider(ComputedColliderShape::ConvexHull),
-                amah.icosphere.clone(),
-                amah.glowy_material.clone(),
-                // NotShadowCaster,
-                PointLightBundle { transform,
+        spawn!((PointLightBundle { transform,
                                    point_light: PointLight { intensity: 500.0,
                                                              radius: 1.0,
                                                              shadows_enabled: true,
                                                              color:
-                                                               Color::rgb_linear(13.99,
-                                                                                 5.32, 20.0),
+                                                               Color::rgba_linear(13.99,
+                                                                                  11.32,
+                                                                                  50.0, 0.5),
                                                              ..default() },
-                                   ..default() }))
+                                   ..default() }),
+               (PbrBundle { mesh: amah.icosphere.clone(),
+                            material: amah.glowy_material.clone(),
+                            ..default() },
+                NotShadowCaster,
+                RigidBody::Fixed,
+                Friction::default(),
+                Velocity::default(),
+                AsyncCollider(ComputedColliderShape::ConvexHull)))
       }
       _ => () // _ => panic!("{:?}, {tile}", coords),
     }

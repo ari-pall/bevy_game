@@ -149,7 +149,7 @@ impl Plugin for AssetStuffPlugin {
       funky_material, StandardMaterial::from(funky_image.clone())
       glowy_material, StandardMaterial { unlit: true,
                                          alpha_mode: AlphaMode::Mask(0.0),
-                                         ..Color::rgba_linear(13.99, 5.32, 20.0, 0.5).into() }
+                                         ..Color::rgba_linear(13.99, 11.32, 50.0, 0.5).into() }
       water_material, StandardMaterial { perceptual_roughness:0.3,
                                          base_color: Color::SEA_GREEN,
                                          metallic:0.0,
