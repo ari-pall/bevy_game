@@ -17,7 +17,7 @@ fn avg<T: std::iter::Sum + std::ops::Div<f32, Output = T>>(coll: impl IntoIterat
 // use bevy_tnua
 // use bevy_tnua_rapier3d::TnuaRapier3dIOBundle
 // use bevy_tnua
-const PLAYER_WALK_FORCE: f32 = 6.0;
+const PLAYER_WALK_FORCE: f32 = 14.0;
 const PLAYER_MAX_SPEED: f32 = 11.0;
 const PLAYER_MIN_JUMP_IMPULSE: f32 = 1.2;
 const PLAYER_MAX_JUMP_IMPULSE: f32 = 2.9;
@@ -34,6 +34,7 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
                               &mut ExternalForce,
                               &mut ExternalImpulse,
                               &mut Velocity,
+                              &mut Friction,
                               &Collider,
                               &Transform,
                               &mut Player)>) {
@@ -41,11 +42,13 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
               mut player_force,
               mut player_impulse,
               mut player_vel,
+              mut player_friction,
               player_collider,
               player_transform,
               mut player)),
           Ok(cam_transform)) = (playerq.get_single_mut(), camq.get_single())
   {
+    player_friction.coefficient = if player_vel.linvel.y > 0.03 { 0.0 } else { 1.0 };
     let player_max_speed = PLAYER_MAX_SPEED + player.speed_boost;
     let mut entities_colliding_with_player = Vec::new();
     rapier_context.intersections_with_shape(player_transform.translation - (Vec3::Y * 0.01),
@@ -80,15 +83,15 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
        (KeyCode::S, Vec2::NEG_Y)].into_iter()
                                  .filter_map(|(k, v)| keyboard_input.pressed(k).then_some(v))
                                  .sum::<Vec2>()
-                                 .try_normalize();
+                                 .normalize_or_zero();
+    let Vec2 { x, y } = dir;
     // if grounded
     player_force.force = if let Some(avgvel) = avg_vel_of_entities_colliding_with_player {
       let relvel = player_vel.linvel - avgvel;
       let relspeed = relvel.length();
-      let desired_force = match dir {
-        Some(Vec2 { x, y }) => (right * x + forward * y) * PLAYER_WALK_FORCE,
-        None => relvel * (-1.3)
-      };
+      let desired_force = Vec3 { y: 0.0,
+                                 ..relvel * (-1.6) }
+                          + (right * x + forward * y) * PLAYER_WALK_FORCE;
       if relspeed < 0.1 {
         desired_force
       } else {
@@ -113,11 +116,9 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
                                      * charge_fraction));
     }
     player.jump_charge_level =
-      match (keyboard_input.pressed(KeyCode::Space), player.jump_charge_level) {
-        (false, _) => None,
-        (true, None) => Some(0),
-        (true, Some(n)) => Some(PLAYER_JUMP_CHARGE_LEVEL_MAX.min(n + 1))
-      };
+      keyboard_input.pressed(KeyCode::Space)
+                    .then_some(player.jump_charge_level
+                               .map_or(0, |n| PLAYER_JUMP_CHARGE_LEVEL_MAX.min(n + 1)));
     if let Ok(mut player_sprite_transform) = player_sprite_transform_q.get_single_mut() {
       player_sprite_transform.scale.y = 1.0 - (charge_fraction * 0.3);
       player_sprite_transform.translation.y = (-charge_fraction) * 0.2;

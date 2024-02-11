@@ -1,3 +1,7 @@
+use bevy::{core_pipeline::bloom::BloomSettings,
+           pbr::{NotShadowCaster, NotShadowReceiver},
+           render::primitives::CubemapFrusta};
+
 use {crate::{assetstuff::AllMyAssetHandles,
              components::{GibSpriteBundle, ItemPickUp, Player, SpinningAnimation},
              jumpy_penguin::SegmentPathMotion},
@@ -92,6 +96,13 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                           Transform::from_xyz(-30.0, -30.0, 30.0).with_scale(Vec3::ONE
                                                                              * 20.0),
                         ..default() }));
+  spawn!((RigidBody::Fixed,
+          Friction::new(0.1),
+          AsyncSceneCollider { shape: Some(ComputedColliderShape::TriMesh),
+                               named_shapes: default() },
+          SceneBundle { scene: amah.goxel_level.clone(),
+                        transform: Transform::from_xyz(40.0, -10.0, -40.0),
+                        ..default() }));
   // ScreenSpaceAmbientOcclusionPlugin
   // Camera
   spawn!((Camera3dBundle { camera: Camera { hdr: true,
@@ -100,6 +111,8 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                              core_pipeline::tonemapping::Tonemapping::Reinhard,
                            ..default() },
           UiCameraConfig { show_ui: true },
+          BloomSettings { intensity: 0.3,
+                          ..default() },
           ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
                               cursor_lock_toggle_enabled: true,
                               cursor_lock_active: false,
@@ -220,7 +233,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                     up_down_step: 0,
                                     original_transform: coffee_transform,
                                     up_down_distance: 0.3 },
-                SceneBundle { scene: amah.coffee_gltf.clone(),
+                SceneBundle { scene: amah.coffee_scene.clone(),
                               transform: coffee_transform,
                               ..default() }))
       }
@@ -233,14 +246,24 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                      SceneBundle { scene: amah.lunarlander.clone(),
                                    transform,
                                    ..default() })),
-      'l' => spawn!(PointLightBundle { transform,
-                                       point_light: PointLight { intensity: 1500.0,
-                                                                 radius: 0.7,
-                                                                 range: 50.0,
-                                                                 shadows_enabled:
-                                                                   true,
-                                                                 ..default() },
-                                       ..default() }),
+      'l' => {
+        spawn!((RigidBody::Fixed,
+                Friction::default(),
+                Velocity::default(),
+                AsyncCollider(ComputedColliderShape::ConvexHull),
+                amah.icosphere.clone(),
+                amah.glowy_material.clone(),
+                // NotShadowCaster,
+                PointLightBundle { transform,
+                                   point_light: PointLight { intensity: 500.0,
+                                                             radius: 1.0,
+                                                             shadows_enabled: true,
+                                                             color:
+                                                               Color::rgb_linear(13.99,
+                                                                                 5.32, 20.0),
+                                                             ..default() },
+                                   ..default() }))
+      }
       _ => () // _ => panic!("{:?}, {tile}", coords),
     }
   }

@@ -1,3 +1,5 @@
+use bevy::pbr::NotShadowReceiver;
+
 use {bevy::{asset::embedded_asset,
             gltf::{Gltf, GltfMesh},
             prelude::*,
@@ -51,6 +53,7 @@ pub struct AllMyAssetHandles {
   pub penguin_material: Handle<StandardMaterial>,
   pub particle_material: Handle<StandardMaterial>,
   pub funky_material: Handle<StandardMaterial>,
+  pub glowy_material: Handle<StandardMaterial>,
   pub colorful_material: Handle<StandardMaterial>,
   pub character_controller_demo_scene_gltf: Handle<Gltf>,
   pub wat: Handle<Gltf>,
@@ -68,7 +71,8 @@ pub struct AllMyAssetHandles {
   pub iceberg: Handle<Image>,
   pub stickman: Handle<Image>,
   pub coffee: Handle<Image>,
-  pub coffee_gltf: Handle<Scene>,
+  pub coffee_scene: Handle<Scene>,
+  pub goxel_level: Handle<Scene>,
   pub snow_image: Handle<Image>,
   pub snow_material: Handle<StandardMaterial>,
   pub grass: Handle<Image>,
@@ -76,7 +80,7 @@ pub struct AllMyAssetHandles {
   pub stone: Handle<Image>,
   pub stone_material: Handle<StandardMaterial>,
   pub water: Handle<Image>,
-  pub water_material: Handle<StandardMaterial>,
+  pub water_material: Handle<StandardMaterial>
 }
 pub struct AssetStuffPlugin;
 impl Plugin for AssetStuffPlugin {
@@ -107,7 +111,8 @@ impl Plugin for AssetStuffPlugin {
       island_level_scene, "this_here_level.glb", "Scene0"
       some_sketch_level, "somesketchlevel.glb", "Scene0"
       snowman, "snowman.glb", "Scene0"
-      coffee_gltf, "coffee.gltf", "Scene0"
+      coffee_scene, "coffee.glb", "Scene0"
+      goxel_level, "goxel_level.glb", "Scene0"
     }
     asset_paths! {
       stone, "stone.png"
@@ -123,6 +128,10 @@ impl Plugin for AssetStuffPlugin {
       wat, "wat.glb"
       character_controller_demo_scene_gltf, "character_controller_demo.glb"
     }
+
+    // StandardMaterial { unlit: true,
+    //                    alpha_mode: AlphaMode::Mask(0.0),
+    //                    ..Color::rgba_linear(13.99, 5.32, 20.0, 0.5).into() };
     assets! {
       unitcube, shape::Cube { size: 1.0 }.into()
       cube, shape::Cube { size: 0.7 }.into()
@@ -138,6 +147,9 @@ impl Plugin for AssetStuffPlugin {
       colorful_material, StandardMaterial::from(colorful_image.clone())
       funky_image, uv_debug_texture()
       funky_material, StandardMaterial::from(funky_image.clone())
+      glowy_material, StandardMaterial { unlit: true,
+                                         alpha_mode: AlphaMode::Mask(0.0),
+                                         ..Color::rgba_linear(13.99, 5.32, 20.0, 0.5).into() }
       water_material, StandardMaterial { perceptual_roughness:0.3,
                                          base_color: Color::SEA_GREEN,
                                          metallic:0.0,
