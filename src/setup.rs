@@ -1,9 +1,8 @@
-use bevy::pbr::LightEntity;
+use crate::update::{self, capsule_from_height_and_radius, PLAYER_HEIGHT, PLAYER_RADIUS};
 
-use crate::{assetstuff::GLOWY_COLOR_3, components::name};
-
-use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2},
-             components::{GibSpriteBundle, ItemPickUp, Player, SpinningAnimation},
+use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_COLOR_3},
+             components::{name, pick, GibSpriteBundle, ItemPickUp, Player,
+                          SpinningAnimation},
              jumpy_penguin::SegmentPathMotion},
      bevy::{core_pipeline::{self, bloom::BloomSettings},
             math::vec3,
@@ -103,7 +102,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           Friction::new(0.1),
           AsyncSceneCollider { shape: Some(ComputedColliderShape::TriMesh),
                                named_shapes: default() },
-          SceneBundle { scene: amah.goxel_level.clone(),
+          SceneBundle { scene: amah.turtle_level.clone(),
                         transform: Transform::from_xyz(40.0, -10.0, -40.0),
                         ..default() }));
   // ScreenSpaceAmbientOcclusionPlugin
@@ -114,7 +113,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                              core_pipeline::tonemapping::Tonemapping::Reinhard,
                            ..default() },
           UiCameraConfig { show_ui: true },
-          BloomSettings { intensity: 0.3,
+          BloomSettings { intensity: 0.22,
                           ..default() },
           ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
                               cursor_lock_toggle_enabled: true,
@@ -189,10 +188,12 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                   ..default() })
       }
       'p' => {
-        let player_height = 0.75;
-        let player_radius = 0.3;
+        // let player_height = 1.8;
+        // let player_radius = 0.3;
         let player_friction = 1.0;
-        let player_collider = Collider::capsule_y(player_height / 2.0, player_radius);
+        let player_collider = capsule_from_height_and_radius(PLAYER_HEIGHT, PLAYER_RADIUS);
+        // let player_collider =
+        //   Collider::capsule_y(player_height / 2.0 - player_radius, player_radius);
         // let player_density = 1.0;
         let player_mass = 0.3;
         // RapierContext
@@ -231,6 +232,14 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           crate::components::IsPlayerSprite,
           GibSpriteBundle(Sprite3d { image: amah.stickman.clone(),
                                      pixels_per_metre: 19.0,
+                                     emissive: pick([
+            Color::AZURE,
+            Color::PURPLE,
+            Color::CRIMSON,
+            Color::YELLOW,
+            Color::GREEN,
+            Color::TOMATO
+          ]),
                                      ..default() })
         )
         )
@@ -242,22 +251,18 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                 pixels_per_metre: 12.0,
                                                 ..default() }))),
       'C' => {
-        let coffee_transform = transform.with_scale(Vec3::ONE * 0.1);
         spawn!((ItemPickUp::SpeedBoost,
-                // transform,
-                // GibSpriteBundle(Sprite3d { image: amah.coffee.clone(),
-                //                            transform,
-                //                            pixels_per_metre: 18.0,
-                //                            ..default() })
+                SceneBundle { transform,
+                              ..default() }),
+               (SceneBundle { scene: amah.coffee_scene.clone(),
+                              transform: Transform::default().with_scale(Vec3::ONE
+                                                                         * 0.1),
+                              ..default() },
                 SpinningAnimation { rotation_steps: 430,
                                     rotation_step: 0,
                                     up_down_steps: 520,
                                     up_down_step: 0,
-                                    original_transform: coffee_transform,
-                                    up_down_distance: 0.3 },
-                SceneBundle { scene: amah.coffee_scene.clone(),
-                              transform: coffee_transform,
-                              ..default() }))
+                                    up_down_distance: 0.3 }))
       }
       'L' => spawn!((RigidBody::Dynamic,
                      ColliderMassProperties::Density(1.0),

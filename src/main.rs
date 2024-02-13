@@ -4,6 +4,7 @@
 // #![feature(const_trait_impl)]
 // #![feature(type_alias_impl_trait)]
 #![allow(unused_mut)]
+#![feature(const_fn_floating_point_arithmetic)]
 
 use {bevy::{prelude::*, window},
      bevy_rapier3d::prelude::NoUserData,

@@ -3,10 +3,9 @@ use {bevy::{asset::embedded_asset,
             prelude::*,
             render::render_resource::{Extent3d, TextureDimension, TextureFormat}},
      rust_utils::{comment, map}};
-// what is a scene? how do I generate a scene?
-// fn generate_level() -> Scene { Scene }
 /// Creates a colorful test pattern
 fn uv_debug_texture() -> Image {
+  // DynamicSceneBuilder
   const TEXTURE_SIZE: usize = 8;
   let mut palette: [u8; 32] = [255, 102, 159, 255, 255, 159, 102, 255, 236, 255, 102, 255,
                                121, 255, 102, 255, 102, 255, 198, 255, 102, 198, 255, 255,
@@ -30,7 +29,7 @@ fn colorful_texture() -> Image {
                              height: texture_size,
                              depth_or_array_layers: 1 },
                   TextureDimension::D2,
-                  map(|i| [255, 121, 236, 102, 159, 198][i % 6],
+                  map(|_| rand::random(),
                       0..((texture_size * texture_size * 4) as usize)).collect::<Vec<u8>>()
                                                                       .as_slice(),
                   TextureFormat::Rgba8UnormSrgb)
@@ -65,6 +64,8 @@ pub struct AllMyAssetHandles {
   pub level_scene: Handle<Scene>,
   pub island_level_scene: Handle<Scene>,
   pub some_sketch_level: Handle<Scene>,
+  pub goxel_level: Handle<Scene>,
+  pub turtle_level: Handle<Scene>,
   pub snowman: Handle<Scene>,
   pub funky_image: Handle<Image>,
   pub colorful_image: Handle<Image>,
@@ -75,7 +76,6 @@ pub struct AllMyAssetHandles {
   pub stickman: Handle<Image>,
   pub coffee: Handle<Image>,
   pub coffee_scene: Handle<Scene>,
-  pub goxel_level: Handle<Scene>,
   pub snow_image: Handle<Image>,
   pub snow_material: Handle<StandardMaterial>,
   pub grass: Handle<Image>,
@@ -116,6 +116,7 @@ impl Plugin for AssetStuffPlugin {
       snowman, "snowman.glb", "Scene0"
       coffee_scene, "coffee.glb", "Scene0"
       goxel_level, "goxel_level.glb", "Scene0"
+      turtle_level, "turtle level.gltf", "Scene0"
     }
     asset_paths! {
       stone, "stone.png"

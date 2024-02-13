@@ -14,14 +14,17 @@ fn avg<T: std::iter::Sum + std::ops::Div<f32, Output = T>>(coll: impl IntoIterat
   let s = v.into_iter().sum::<T>();
   (n != 0).then(|| s / (n as f32))
 }
-// use bevy_tnua
-// use bevy_tnua_rapier3d::TnuaRapier3dIOBundle
-// use bevy_tnua
-const PLAYER_WALK_FORCE: f32 = 14.0;
-const PLAYER_MAX_SPEED: f32 = 11.0;
-const PLAYER_MIN_JUMP_IMPULSE: f32 = 1.2;
-const PLAYER_MAX_JUMP_IMPULSE: f32 = 2.9;
-const PLAYER_JUMP_CHARGE_LEVEL_MAX: u16 = 130;
+pub fn capsule_from_height_and_radius(height: f32, radius: f32) -> Collider {
+  Collider::capsule_y(height / 2.0 - radius, radius)
+}
+
+pub const PLAYER_HEIGHT: f32 = 1.8;
+pub const PLAYER_RADIUS: f32 = 0.3;
+pub const PLAYER_WALK_FORCE: f32 = 14.0;
+pub const PLAYER_MAX_SPEED: f32 = 11.0;
+pub const PLAYER_MIN_JUMP_IMPULSE: f32 = 1.2;
+pub const PLAYER_MAX_JUMP_IMPULSE: f32 = 2.9;
+pub const PLAYER_JUMP_CHARGE_LEVEL_MAX: u16 = 130;
 pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
                        camq: Query<&Transform, With<Camera3d>>,
                        rapier_context: Res<RapierContext>,
@@ -35,7 +38,6 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
                               &mut ExternalImpulse,
                               &mut Velocity,
                               &mut Friction,
-                              &Collider,
                               &Transform,
                               &mut Player)>) {
   if let (Ok((player_entity,
@@ -43,17 +45,18 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
               mut player_impulse,
               mut player_vel,
               mut player_friction,
-              player_collider,
               player_transform,
               mut player)),
           Ok(cam_transform)) = (playerq.get_single_mut(), camq.get_single())
   {
+    let player_walk_zone =
+      capsule_from_height_and_radius(PLAYER_HEIGHT * 1.02, PLAYER_RADIUS * 1.02);
     player_friction.coefficient = if player_vel.linvel.y > 0.03 { 0.0 } else { 1.0 };
     let player_max_speed = PLAYER_MAX_SPEED + player.speed_boost;
     let mut entities_colliding_with_player = Vec::new();
-    rapier_context.intersections_with_shape(player_transform.translation - (Vec3::Y * 0.01),
+    rapier_context.intersections_with_shape(player_transform.translation,
                                             Quat::IDENTITY,
-                                            player_collider,
+                                            &player_walk_zone,
                                             QueryFilter::new()
                                             .exclude_collider(player_entity),
                                             |e| {
@@ -183,7 +186,7 @@ pub fn player_follower(mut followerq: Query<(&mut ExternalForce, &Transform),
     }
   }
 }
-const PICKUPDISTANCE: f32 = 0.6;
+const PICKUPDISTANCE: f32 = 0.7;
 const SPEEDBOOSTAMOUNT: f32 = 8.0;
 pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
                     itemsq: Query<(Entity, &Transform, &ItemPickUp)>,
@@ -207,8 +210,7 @@ pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
 }
 pub fn spinning_animation(mut q: Query<(&mut Transform, &mut SpinningAnimation)>) {
   for (mut t, mut sa) in &mut q {
-    let SpinningAnimation { original_transform,
-                            rotation_steps,
+    let SpinningAnimation { rotation_steps,
                             rotation_step,
                             up_down_steps,
                             up_down_step,
@@ -219,7 +221,7 @@ pub fn spinning_animation(mut q: Query<(&mut Transform, &mut SpinningAnimation)>
 
     let sine_offset =
       ((up_down_step as f32 / up_down_steps as f32) * TAU).sin() * up_down_distance;
-    t.translation.y = original_transform.translation.y + sine_offset;
+    t.translation.y = sine_offset;
 
     sa.rotation_step = (rotation_step + 1) % rotation_steps;
     sa.up_down_step = (up_down_step + 1) % up_down_steps;

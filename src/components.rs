@@ -22,34 +22,33 @@ pub struct RandomMovement;
 pub struct EnemyMovement;
 #[derive(Component, Clone)]
 pub struct SpinningAnimation {
-  pub original_transform: Transform,
   pub rotation_steps: u32,
   pub rotation_step: u32,
   pub up_down_steps: u32,
   pub up_down_step: u32,
-  pub up_down_distance: f32,
+  pub up_down_distance: f32
 }
 #[derive(Component, Clone)]
 pub struct IsPlayerSprite;
 #[derive(Component, Clone, Debug)]
 pub struct Player {
   pub speed_boost: f32,
-  pub jump_charge_level: Option<u16>,
+  pub jump_charge_level: Option<u16>
 }
 #[derive(Component, Clone, Copy)]
 pub enum ItemPickUp {
   SpeedBoost,
-  HealthBoost(u32),
+  HealthBoost(u32)
 }
 #[derive(Component, Clone)]
 pub enum Interact {
   GiveItem(Entity),
-  AddMessage(String),
+  AddMessage(String)
 }
 #[derive(Component)]
 pub struct Combat {
   pub hp: u32,
-  pub damage: u32,
+  pub damage: u32
 }
 
 use rand::thread_rng;
@@ -82,11 +81,11 @@ pub fn name(s: &'static str) -> Name { Name::new(s) }
 #[derive(Component, Default)]
 pub struct Tile {
   pub walkable: bool,
-  pub color: Color,
+  pub color: Color
 }
 #[derive(Component)]
 pub struct Fire {
-  pub dir: (i8, i8),
+  pub dir: (i8, i8)
 }
 
 #[derive(Component)]
@@ -111,7 +110,7 @@ pub enum Dir {
   SOUTHWEST,
   WEST,
   NORTHWEST,
-  HERE,
+  HERE
 }
 const NORTH: Dir = Dir::NORTH;
 const NORTHEAST: Dir = Dir::NORTHEAST;
@@ -145,7 +144,7 @@ impl Dir {
       (O::Equal, O::Greater) => Dir::NORTH,
       (O::Greater, O::Less) => Dir::SOUTHEAST,
       (O::Greater, O::Equal) => Dir::EAST,
-      (O::Greater, O::Greater) => Dir::NORTHEAST,
+      (O::Greater, O::Greater) => Dir::NORTHEAST
     }
   }
 }
@@ -160,7 +159,7 @@ impl From<Dir> for [i32; 2] {
       Dir::SOUTHWEST => [-1, -1],
       Dir::WEST => [-1, 0],
       Dir::NORTHWEST => [-1, 1],
-      Dir::HERE => [0, 0],
+      Dir::HERE => [0, 0]
     }
   }
 }
@@ -184,7 +183,7 @@ impl std::ops::Sub<Dir> for Coord {
 
 pub struct MovingPlatform {
   pos1: Vec3,
-  pos2: Vec3,
+  pos2: Vec3
 }
 
 comment! {
