@@ -20,19 +20,17 @@ pub struct DragonAttack;
 pub struct RandomMovement;
 #[derive(Component, Clone)]
 pub struct EnemyMovement;
-#[derive(Component, Clone)]
-pub struct SpinningAnimation {
-  pub rotation_steps: u32,
-  pub rotation_step: u32,
-  pub up_down_steps: u32,
-  pub up_down_step: u32,
-  pub up_down_distance: f32
-}
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct u32_cycle<const STEPS: u32>(u32);
 impl<const STEPS: u32> u32_cycle<STEPS> {
   pub fn next(&mut self) { self.0 = (self.0 + 1) % STEPS; }
   pub fn fraction(&self) -> f32 { (self.0 as f32) / (STEPS as f32) }
+}
+#[derive(Component, Clone)]
+pub struct SpinningAnimation {
+  pub rotation_steps: u32_cycle<430>,
+  pub up_down_steps: u32_cycle<520>,
+  pub up_down_distance: f32
 }
 const SUN_CYCLE_STEPS: u32 = 8000;
 #[derive(Component, Default)]

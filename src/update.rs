@@ -1,8 +1,6 @@
-use crate::components::{Sun, SunSprite};
-
 use {crate::{assetstuff::AllMyAssetHandles,
              components::{GibSpriteBundle, IsPlayerSprite, ItemPickUp, Player,
-                          PlayerFollower, SpinningAnimation},
+                          PlayerFollower, SpinningAnimation, Sun, SunSprite},
              setup::spawn_with_child},
      bevy::prelude::*,
      bevy_rapier3d::prelude::*,
@@ -133,7 +131,7 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
 pub fn sprites_face_camera(camq: Query<&GlobalTransform, With<Camera3d>>,
                            mut spriteq: Query<(&mut Transform, &GlobalTransform),
                                  (With<Sprite3dComponent>,
-                                  Without<Sun>,
+                                  Without<SunSprite>,
                                   Without<Camera3d>)>) {
   if let Ok(cam_globaltransform) = camq.get_single() {
     for (mut sprite_transform, sprite_globaltransform) in &mut spriteq {
@@ -213,21 +211,14 @@ pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
 }
 pub fn spinning_animation(mut q: Query<(&mut Transform, &mut SpinningAnimation)>) {
   for (mut t, mut sa) in &mut q {
-    let SpinningAnimation { rotation_steps,
-                            rotation_step,
-                            up_down_steps,
-                            up_down_step,
-                            up_down_distance } = *sa;
-
-    let rotation_angle_radians = (rotation_step as f32 / rotation_steps as f32) * TAU;
+    let rotation_angle_radians = sa.rotation_steps.fraction() * TAU;
     t.rotation = Quat::from_rotation_y(rotation_angle_radians);
 
-    let sine_offset =
-      ((up_down_step as f32 / up_down_steps as f32) * TAU).sin() * up_down_distance;
+    let sine_offset = (sa.up_down_steps.fraction() * TAU).sin() * sa.up_down_distance;
     t.translation.y = sine_offset;
 
-    sa.rotation_step = (rotation_step + 1) % rotation_steps;
-    sa.up_down_step = (up_down_step + 1) % up_down_steps;
+    sa.rotation_steps.next();
+    sa.up_down_steps.next();
   }
 }
 pub fn sun_movement(mut camq: Query<&GlobalTransform, With<Camera3d>>,
@@ -243,13 +234,14 @@ pub fn sun_movement(mut camq: Query<&GlobalTransform, With<Camera3d>>,
   {
     sun.0.next();
     let rot_radians = sun.0.fraction() * TAU;
-    let sun_pos = camera_globaltransform.translation()
+    let cam_pos = camera_globaltransform.translation();
+    let sun_pos = cam_pos
                   + Vec3 { x: rot_radians.cos() * 100.0,
                            y: 60.0,
                            z: rot_radians.sin() * 100.0 };
     sun_sprite_transform.translation = sun_pos;
 
-    let dir = camera_globaltransform.translation() - sun_pos;
+    let dir = cam_pos - sun_pos;
     sun_transform.look_to(dir, Vec3::Y);
     sun_sprite_transform.look_to(dir, Vec3::Y);
   }

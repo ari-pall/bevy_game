@@ -1,22 +1,17 @@
-use std::f32::consts::PI;
-
-use bevy::pbr::NotShadowReceiver;
-
-use crate::components::{Sun, SunSprite};
-
 use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_COLOR_3},
              components::{name, pick, GibSpriteBundle, ItemPickUp, Player,
-                          SpinningAnimation},
+                          SpinningAnimation, Sun, SunSprite},
              jumpy_penguin::SegmentPathMotion,
              update::{capsule_from_height_and_radius, PLAYER_HEIGHT, PLAYER_RADIUS}},
      bevy::{core_pipeline::{self, bloom::BloomSettings},
             math::vec3,
-            pbr::NotShadowCaster,
+            pbr::{NotShadowCaster, NotShadowReceiver},
             prelude::*},
      bevy_rapier3d::prelude::*,
      bevy_sprite3d::Sprite3d,
      bevy_third_person_camera::{ThirdPersonCamera, ThirdPersonCameraTarget},
-     rust_utils::comment};
+     rust_utils::comment,
+     std::f32::consts::PI};
 pub fn spawn_with_child(c: &mut Commands, a: impl Bundle, b: impl Bundle) {
   c.spawn(a).with_children(|x| {
               x.spawn(b);
@@ -113,23 +108,25 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   spawn!((Sun::default(),
           DirectionalLightBundle { directional_light:
                                      DirectionalLight { color: Color::WHITE,
-                                                        illuminance: 9000.5,
+                                                        illuminance: 12000.0,
                                                         shadows_enabled: true,
                                                         ..default()
                                                         // shadow_depth_bias: todo!(),
                                                         // shadow_normal_bias: todo!()
                                    },
-                                   transform: Transform { translation:
-                                                            Vec3::new(0.0, 2.0, 0.0),
-                                                          rotation:
-                                                            Quat::from_rotation_x(-PI / 4.),
-                                                          ..default() },
-
                                    ..default() }));
   spawn!((GibSpriteBundle(Sprite3d { image: amah.sun.clone(),
+                                     unlit: true,
+                                     alpha_mode: AlphaMode::Mask(0.0),
                                      pixels_per_metre: 1.3,
                                      emissive: Color::YELLOW,
                                      ..default() }),
+          // PointLight { intensity: 400.0,
+          //              radius: 1.0,
+          //              // range: 100.0,
+          //              shadows_enabled: false,
+          //              color: Color::YELLOW,
+          //              ..default() },
           NotShadowCaster,
           NotShadowReceiver,
           SunSprite));
@@ -291,10 +288,8 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                               transform: Transform::default().with_scale(Vec3::ONE
                                                                          * 0.1),
                               ..default() },
-                SpinningAnimation { rotation_steps: 430,
-                                    rotation_step: 0,
-                                    up_down_steps: 520,
-                                    up_down_step: 0,
+                SpinningAnimation { rotation_steps: default(),
+                                    up_down_steps: default(),
                                     up_down_distance: 0.3 }))
       }
       'L' => spawn!((RigidBody::Dynamic,
