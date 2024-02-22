@@ -28,6 +28,17 @@ pub struct SpinningAnimation {
   pub up_down_step: u32,
   pub up_down_distance: f32
 }
+#[derive(Default)]
+pub struct u32_cycle<const STEPS: u32>(u32);
+impl<const STEPS: u32> u32_cycle<STEPS> {
+  pub fn next(&mut self) { self.0 = (self.0 + 1) % STEPS; }
+  pub fn fraction(&self) -> f32 { (self.0 as f32) / (STEPS as f32) }
+}
+const SUN_CYCLE_STEPS: u32 = 8000;
+#[derive(Component, Default)]
+pub struct Sun(pub u32_cycle<SUN_CYCLE_STEPS>);
+#[derive(Component)]
+pub struct SunSprite;
 #[derive(Component, Clone)]
 pub struct IsPlayerSprite;
 #[derive(Component, Clone, Debug)]

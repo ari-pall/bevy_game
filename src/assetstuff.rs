@@ -74,6 +74,8 @@ pub struct AllMyAssetHandles {
   pub tree: Handle<Image>,
   pub iceberg: Handle<Image>,
   pub stickman: Handle<Image>,
+  pub skybox: Handle<Image>,
+  pub sun: Handle<Image>,
   pub coffee: Handle<Image>,
   pub coffee_scene: Handle<Scene>,
   pub snow_image: Handle<Image>,
@@ -120,6 +122,8 @@ impl Plugin for AssetStuffPlugin {
     }
     asset_paths! {
       stone, "stone.png"
+      skybox, "skybox.png"
+      sun, "sun.png"
       iceberg, "iceberg.png"
       coffee, "coffee.png"
       stickman, "stickman.png"
@@ -136,6 +140,7 @@ impl Plugin for AssetStuffPlugin {
     StandardMaterial { unlit: true,
                        alpha_mode: AlphaMode::Mask(0.0),
                        ..GLOWY_COLOR_3.into() };
+
     assets! {
       unitcube, shape::Cube { size: 1.0 }.into()
       cube, shape::Cube { size: 0.7 }.into()
@@ -150,7 +155,7 @@ impl Plugin for AssetStuffPlugin {
       colorful_image, colorful_texture()
       colorful_material, StandardMaterial::from(colorful_image.clone())
       funky_image, uv_debug_texture()
-      funky_material, StandardMaterial::from(funky_image.clone())
+      funky_material, funky_image.clone().into()
       glowy_material, StandardMaterial { unlit: true,
                                          alpha_mode: AlphaMode::Mask(0.0),
                                          ..GLOWY_COLOR.into() }
@@ -170,21 +175,21 @@ impl Plugin for AssetStuffPlugin {
                                         metallic:0.0,
                                         reflectance:0.5,
                                         ior: 1.31,
-                                        ..StandardMaterial::from(snow_image.clone())}
+                                        ..snow_image.clone().into()}
       stone_material, StandardMaterial { perceptual_roughness:0.8,
                                          base_color: Color::GRAY,
                                          metallic:0.0,
                                          reflectance:0.3,
-                                         ..StandardMaterial::from(stone.clone())}
+                                         ..stone.clone().into()}
       grass_material, StandardMaterial { perceptual_roughness:0.8,
                                          base_color: Color::GREEN,
                                          metallic:0.0,
                                          reflectance:0.2,
-                                         ..StandardMaterial::from(grass.clone())}
-      penguin_material, StandardMaterial::from(penguin_image.clone())
-      particle_material,StandardMaterial::from(Color::rgb(0.2, 0.7, 0.9))
-      particle_mesh, Mesh::try_from(shape::Icosphere { radius: 0.06 as f32,
-                                                      ..default() }).unwrap()
+                                         ..grass.clone().into()}
+      penguin_material, penguin_image.clone().into()
+      particle_material, Color::rgb(0.2, 0.7, 0.9).into()
+      particle_mesh, shape::Icosphere { radius: 0.06 as f32,
+                                        ..default() }.try_into().unwrap()
     }
     app.insert_resource(amah);
   }

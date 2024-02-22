@@ -1,9 +1,14 @@
-use crate::update::{self, capsule_from_height_and_radius, PLAYER_HEIGHT, PLAYER_RADIUS};
+use std::f32::consts::PI;
+
+use bevy::pbr::NotShadowReceiver;
+
+use crate::components::{Sun, SunSprite};
 
 use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_COLOR_3},
              components::{name, pick, GibSpriteBundle, ItemPickUp, Player,
                           SpinningAnimation},
-             jumpy_penguin::SegmentPathMotion},
+             jumpy_penguin::SegmentPathMotion,
+             update::{capsule_from_height_and_radius, PLAYER_HEIGHT, PLAYER_RADIUS}},
      bevy::{core_pipeline::{self, bloom::BloomSettings},
             math::vec3,
             pbr::NotShadowCaster,
@@ -105,16 +110,44 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           SceneBundle { scene: amah.turtle_level.clone(),
                         transform: Transform::from_xyz(40.0, -10.0, -40.0),
                         ..default() }));
+  spawn!((Sun::default(),
+          DirectionalLightBundle { directional_light:
+                                     DirectionalLight { color: Color::WHITE,
+                                                        illuminance: 9000.5,
+                                                        shadows_enabled: true,
+                                                        ..default()
+                                                        // shadow_depth_bias: todo!(),
+                                                        // shadow_normal_bias: todo!()
+                                   },
+                                   transform: Transform { translation:
+                                                            Vec3::new(0.0, 2.0, 0.0),
+                                                          rotation:
+                                                            Quat::from_rotation_x(-PI / 4.),
+                                                          ..default() },
+
+                                   ..default() }));
+  spawn!((GibSpriteBundle(Sprite3d { image: amah.sun.clone(),
+                                     pixels_per_metre: 1.3,
+                                     emissive: Color::YELLOW,
+                                     ..default() }),
+          NotShadowCaster,
+          NotShadowReceiver,
+          SunSprite));
   // ScreenSpaceAmbientOcclusionPlugin
   // Camera
   spawn!((Camera3dBundle { camera: Camera { hdr: true,
+
                                             ..default() },
                            tonemapping:
                              core_pipeline::tonemapping::Tonemapping::Reinhard,
                            ..default() },
+          // FogSettings { color: Color::rgb(0.2, 0.2, 0.4),
+          //               falloff: FogFalloff::ExponentialSquared { density: 0.01 },
+          //               ..default() },
           UiCameraConfig { show_ui: true },
           BloomSettings { intensity: 0.22,
                           ..default() },
+          // Skybox(amah.skybox.clone()),
           ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
                               cursor_lock_toggle_enabled: true,
                               cursor_lock_active: false,
@@ -180,7 +213,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                             material: amah.glowy_material_2.clone(),
                             transform: transform.with_scale(Vec3::ONE * 0.4),
                             ..default() }),
-               PointLightBundle { point_light: PointLight { intensity: 200.0,
+               PointLightBundle { point_light: PointLight { intensity: 300.0,
                                                             radius: 0.4,
                                                             shadows_enabled: true,
                                                             color: GLOWY_COLOR_2,
@@ -275,8 +308,9 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                    ..default() })),
       'l' => {
         spawn!(PointLightBundle { transform,
-                                  point_light: PointLight { intensity: 500.0,
+                                  point_light: PointLight { intensity: 400.0,
                                                             radius: 1.0,
+                                                            // range: 100.0,
                                                             shadows_enabled: true,
                                                             color: GLOWY_COLOR,
                                                             ..default() },

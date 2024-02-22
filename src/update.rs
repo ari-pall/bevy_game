@@ -1,3 +1,5 @@
+use crate::components::{Sun, SunSprite};
+
 use {crate::{assetstuff::AllMyAssetHandles,
              components::{GibSpriteBundle, IsPlayerSprite, ItemPickUp, Player,
                           PlayerFollower, SpinningAnimation},
@@ -51,7 +53,7 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
   {
     let player_walk_zone =
       capsule_from_height_and_radius(PLAYER_HEIGHT * 1.02, PLAYER_RADIUS * 1.02);
-    player_friction.coefficient = if player_vel.linvel.y > 0.03 { 0.0 } else { 1.0 };
+    // player_friction.coefficient = if player_vel.linvel.y > 0.03 { 0.0 } else { 1.0 };
     let player_max_speed = PLAYER_MAX_SPEED + player.speed_boost;
     let mut entities_colliding_with_player = Vec::new();
     rapier_context.intersections_with_shape(player_transform.translation,
@@ -131,6 +133,7 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
 pub fn sprites_face_camera(camq: Query<&GlobalTransform, With<Camera3d>>,
                            mut spriteq: Query<(&mut Transform, &GlobalTransform),
                                  (With<Sprite3dComponent>,
+                                  Without<Sun>,
                                   Without<Camera3d>)>) {
   if let Ok(cam_globaltransform) = camq.get_single() {
     for (mut sprite_transform, sprite_globaltransform) in &mut spriteq {
@@ -225,5 +228,29 @@ pub fn spinning_animation(mut q: Query<(&mut Transform, &mut SpinningAnimation)>
 
     sa.rotation_step = (rotation_step + 1) % rotation_steps;
     sa.up_down_step = (up_down_step + 1) % up_down_steps;
+  }
+}
+pub fn sun_movement(mut camq: Query<&GlobalTransform, With<Camera3d>>,
+                    mut sunq: Query<(&mut Sun, &mut Transform), Without<Camera3d>>,
+                    mut sun_sprite_q: Query<&mut Transform,
+                          (With<SunSprite>,
+                           Without<Camera3d>,
+                           Without<Sun>)>) {
+  if let (Ok(camera_globaltransform),
+          Ok((mut sun, mut sun_transform)),
+          Ok(mut sun_sprite_transform)) =
+    (camq.get_single(), sunq.get_single_mut(), sun_sprite_q.get_single_mut())
+  {
+    sun.0.next();
+    let rot_radians = sun.0.fraction() * TAU;
+    let sun_pos = camera_globaltransform.translation()
+                  + Vec3 { x: rot_radians.cos() * 100.0,
+                           y: 60.0,
+                           z: rot_radians.sin() * 100.0 };
+    sun_sprite_transform.translation = sun_pos;
+
+    let dir = camera_globaltransform.translation() - sun_pos;
+    sun_transform.look_to(dir, Vec3::Y);
+    sun_sprite_transform.look_to(dir, Vec3::Y);
   }
 }

@@ -12,7 +12,7 @@ pub struct Water;
 #[derive(Component)]
 pub struct SegmentPathMotion {
   pub destinations: Peekable<Cycle<std::vec::IntoIter<Vec3>>>,
-  pub speed: f32,
+  pub speed: f32
 }
 impl SegmentPathMotion {
   pub fn new(destinations: impl IntoIterator<Item = Vec3>, speed: f32) -> Self {
@@ -36,10 +36,10 @@ impl SegmentPathMotion {
 pub fn segment_path_motion(mut q: Query<(&mut Velocity,
                                   &Transform,
                                   &mut SegmentPathMotion)>) {
-  for (mut lv, t, mut spm) in q.iter_mut() {
-    if spm.dest().distance(t.translation) < spm.speed * 3.0 {
+  for (mut vel, t, mut spm) in q.iter_mut() {
+    if spm.dest().distance(t.translation) < spm.speed {
       spm.destinations.next();
     }
-    lv.linvel = (spm.dest() - t.translation).normalize_or_zero() * spm.speed;
+    vel.linvel = (spm.dest() - t.translation).normalize_or_zero() * spm.speed;
   }
 }

@@ -75,7 +75,7 @@ pub fn main() {
                           // tests::tests_plugin
   ))
 
-            .insert_resource(AmbientLight{ color: Color::ALICE_BLUE, brightness: 0.2 })
+            // .insert_resource(AmbientLight{ color: Color::ALICE_BLUE, brightness: 0.2 })
 
         // .insert_resource(bevy_xpbd_3d::resources::SubstepCount(2))
             .add_systems(Startup, setup::setup)
@@ -87,6 +87,7 @@ pub fn main() {
                           update::spawn_mushroom_man,
                           update::player_follower,
                           update::spinning_animation,
+                          update::sun_movement,
                           bevy::window::close_on_esc,
                           jumpy_penguin::segment_path_motion))
             .run();
