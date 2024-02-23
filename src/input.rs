@@ -19,12 +19,7 @@ fn keyboard_input(// mut movement_event_writer: EventWriter<MoveHorizontallyActi
                   keyboard_input: Res<Input<KeyCode>>,
                   mouse_button_input: Res<Input<MouseButton>>,
                   mut cam_q: Query<&mut ThirdPersonCamera>,
-                  mut playerq: Query<(Entity,
-                         Option<&ExternalForce>,
-                         Option<&ExternalImpulse>,
-                         Option<&Velocity>,
-                         Option<&Children>,
-                         Option<&Player>)>) {
+                  mut playerq: Query<&Transform, With<Player>>) {
   if keyboard_input.just_pressed(KeyCode::L) {
     playerq.for_each(debug_println);
   }

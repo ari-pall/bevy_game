@@ -1,3 +1,5 @@
+use std::f32::consts::TAU;
+
 use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_COLOR_3},
              components::{name, pick, GibSpriteBundle, ItemPickUp, Player,
                           SpinningAnimation, Sun, SunSprite},
@@ -105,6 +107,14 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           SceneBundle { scene: amah.turtle_level.clone(),
                         transform: Transform::from_xyz(40.0, -10.0, -40.0),
                         ..default() }));
+  spawn!((RigidBody::Fixed,
+          // Friction::new(0.1),
+          AsyncSceneCollider { shape: Some(ComputedColliderShape::TriMesh),
+                               named_shapes: default() },
+          SceneBundle { scene: amah.alevel.clone(),
+                        transform: Transform::from_xyz(40.0, -30.0, 60.0)
+                        .with_rotation(Quat::from_rotation_x(0.0 / 4.0)),
+                        ..default() }));
   spawn!((Sun::default(),
           DirectionalLightBundle { directional_light:
                                      DirectionalLight { color: Color::WHITE,
@@ -119,7 +129,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                      unlit: true,
                                      alpha_mode: AlphaMode::Mask(0.0),
                                      pixels_per_metre: 1.3,
-                                     emissive: Color::YELLOW,
+                                     emissive: Color::rgb(20.0, 20.0, 0.0),
                                      ..default() }),
           // PointLight { intensity: 400.0,
           //              radius: 1.0,

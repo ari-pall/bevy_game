@@ -64,6 +64,7 @@ pub struct AllMyAssetHandles {
   pub level_scene: Handle<Scene>,
   pub island_level_scene: Handle<Scene>,
   pub some_sketch_level: Handle<Scene>,
+  pub alevel: Handle<Scene>,
   pub goxel_level: Handle<Scene>,
   pub turtle_level: Handle<Scene>,
   pub snowman: Handle<Scene>,
@@ -113,6 +114,7 @@ impl Plugin for AssetStuffPlugin {
       lunarlander, "lunarlander.glb", "Scene0"
       character_controller_demo_scene, "character_controller_demo.glb", "Scene0"
       level_scene, "level.glb", "Scene0"
+      alevel, "alevel.gltf", "Scene0"
       island_level_scene, "this_here_level.glb", "Scene0"
       some_sketch_level, "somesketchlevel.glb", "Scene0"
       snowman, "snowman.glb", "Scene0"
@@ -127,6 +129,7 @@ impl Plugin for AssetStuffPlugin {
       iceberg, "iceberg.png"
       coffee, "coffee.png"
       stickman, "stickman.png"
+      // alevel, "alevel.gltf"
       grass, "grass.png"
       water, "water.png"
       tree, "tree.png"
