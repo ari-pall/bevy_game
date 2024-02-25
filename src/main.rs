@@ -56,6 +56,7 @@ pub fn main() {
             //   visible: false,
             //   ..default()},
             // mode: window::WindowMode::BorderlessFullscreen,
+            // mode: window::WindowMode::SizedFullscreen,
             present_mode: window::PresentMode::AutoNoVsync,
             title: "bevy_game".to_string(),
             canvas: Some("#bevy".to_string()),
@@ -110,3 +111,4 @@ pub fn main() {
 // trunk build --release --public-url "bevy_game" --filehash false
 
 // trunk serve
+// cargo check --target wasm32-unknown-unknown

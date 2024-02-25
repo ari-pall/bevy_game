@@ -1,4 +1,8 @@
+# [build]
+# target = "wasm32-unknown-unknown"
+# cargo-features = ["per-package-target"]
 [package]
+# default-target = "wasm32-unknown-unknown"
 name = "bevy_game"
 version = "0.1.0"
 edition = "2021"
@@ -24,8 +28,10 @@ exclude = [
 [profile]
 dev = {package."*" = {opt-level = 1}, opt-level = 1}
 release = {lto = true, codegen-units = 1,opt-level = 3}
+# wasm-release = {inherits = "release", lto = true, codegen-units = 1,opt-level = 3}
 # The profile that 'cargo dist' will build with
 dist = {inherits = "release", lto = "thin"}
+
 
 # # Enable a small amount of optimization in debug mode
 # [profile.release]
