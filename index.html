@@ -27,11 +27,14 @@ html, body {
              }
              </script> -->
 
-        <div id="fullscreenelement" class="game-container" onclick="document.getElementById('fullscreenelement').requestFullscreen()">
-            <div class="lds-dual-ring"></div>
-            <canvas id="bevy">
+            <canvas id="bevy" onclick="document.getElementById('bevy').requestFullscreen()">
                 Javascript and support for canvas is required
             </canvas>
-        </div>
+            <!-- <div id="fullscreenelement" class="game-container" onclick="document.getElementById('fullscreenelement').requestFullscreen()">
+                 <div class="lds-dual-ring"></div>
+                 <canvas id="bevy">
+                 Javascript and support for canvas is required
+                 </canvas>
+                 </div> -->
 
 <script type="module">import init from '/bevy_game/target/wasm-bindgen/release/bevy_game.js';init('/bevy_game/target/wasm-bindgen/release/bevy_game_bg.wasm');</script></body></html>

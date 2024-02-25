@@ -1,10 +1,9 @@
 use {crate::{assetstuff::AllMyAssetHandles,
-             components::{GibSpriteBundle, IsPlayerSprite, ItemPickUp, Player,
-                          PlayerFollower, SpinningAnimation, Sun, SunSprite},
-             setup::spawn_with_child},
+             components::{FaceCamera, IsPlayerSprite, ItemPickUp, Player, PlayerFollower,
+                          SpinningAnimation, Sun, SunSprite},
+             setup::{billboard, spawn_with_child}},
      bevy::prelude::*,
      bevy_rapier3d::prelude::*,
-     bevy_sprite3d::{Sprite3d, Sprite3dComponent, Sprite3dParams},
      rust_utils::vec,
      std::f32::consts::TAU};
 fn avg<T: std::iter::Sum + std::ops::Div<f32, Output = T>>(coll: impl IntoIterator<Item = T>)
@@ -24,8 +23,7 @@ pub const PLAYER_WALK_FORCE: f32 = 14.0;
 pub const PLAYER_MAX_SPEED: f32 = 11.0;
 pub const PLAYER_MIN_JUMP_IMPULSE: f32 = 1.2;
 pub const PLAYER_MAX_JUMP_IMPULSE: f32 = 2.9;
-pub const PLAYER_JUMP_CHARGE_LEVEL_MAX: u16 = 130;
-pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
+pub fn player_movement(keyboard_input: Res<ButtonInput<KeyCode>>,
                        camq: Query<&Transform, With<Camera3d>>,
                        rapier_context: Res<RapierContext>,
                        velq: Query<Option<&Velocity>, Without<Player>>,
@@ -54,15 +52,16 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
     // player_friction.coefficient = if player_vel.linvel.y > 0.03 { 0.0 } else { 1.0 };
     let player_max_speed = PLAYER_MAX_SPEED + player.speed_boost;
     let mut entities_colliding_with_player = Vec::new();
-    rapier_context.intersections_with_shape(player_transform.translation,
-                                            Quat::IDENTITY,
-                                            &player_walk_zone,
-                                            QueryFilter::new()
-                                            .exclude_collider(player_entity),
-                                            |e| {
-                                              entities_colliding_with_player.push(e);
-                                              true
-                                            });
+    rapier_context.intersections_with_shape(
+      player_transform.translation,
+      Quat::IDENTITY,
+      &player_walk_zone,
+      QueryFilter::new().exclude_collider(player_entity),
+      |e| {
+        entities_colliding_with_player.push(e);
+        true
+      },
+    );
     // if keyboard_input.just_released(KeyCode::K) {
     //   println!("colls:");
     //   for coll in &entities_colliding_with_player {
@@ -79,14 +78,15 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
     let is_grounded = avg_vel_of_entities_colliding_with_player.is_some();
     let right = cam_transform.right().normalize();
     let forward = -(right.cross(Vec3::Y).normalize_or_zero());
-    let dir =
-      [(KeyCode::D, Vec2::X),
-       (KeyCode::A, Vec2::NEG_X),
-       (KeyCode::W, Vec2::Y),
-       (KeyCode::S, Vec2::NEG_Y)].into_iter()
-                                 .filter_map(|(k, v)| keyboard_input.pressed(k).then_some(v))
-                                 .sum::<Vec2>()
-                                 .normalize_or_zero();
+    let dir = [(KeyCode::KeyD, Vec2::X),
+               (KeyCode::KeyA, Vec2::NEG_X),
+               (KeyCode::KeyW, Vec2::Y),
+               (KeyCode::KeyS, Vec2::NEG_Y)].into_iter()
+                                            .filter_map(|(k, v)| {
+                                              keyboard_input.pressed(k).then_some(v)
+                                            })
+                                            .sum::<Vec2>()
+                                            .normalize_or_zero();
     let Vec2 { x, y } = dir;
     // if grounded
     player_force.force = if let Some(avgvel) = avg_vel_of_entities_colliding_with_player {
@@ -110,56 +110,57 @@ pub fn player_movement(keyboard_input: Res<Input<KeyCode>>,
     } else {
       Vec3::ZERO
     };
-    let charge_fraction =
-      player.jump_charge_level.unwrap_or(0) as f32 / (PLAYER_JUMP_CHARGE_LEVEL_MAX as f32);
+    let charge_fraction = player.jump_charge_level.fraction();
     if is_grounded && keyboard_input.just_released(KeyCode::Space) {
       player_impulse.impulse = Vec3::Y
                                * (PLAYER_MIN_JUMP_IMPULSE
                                   + ((PLAYER_MAX_JUMP_IMPULSE - PLAYER_MIN_JUMP_IMPULSE)
                                      * charge_fraction));
     }
-    player.jump_charge_level =
-      keyboard_input.pressed(KeyCode::Space)
-                    .then_some(player.jump_charge_level
-                               .map_or(0, |n| PLAYER_JUMP_CHARGE_LEVEL_MAX.min(n + 1)));
+    if keyboard_input.pressed(KeyCode::Space) {
+      player.jump_charge_level.next()
+    } else {
+      player.jump_charge_level = default();
+    }
     if let Ok(mut player_sprite_transform) = player_sprite_transform_q.get_single_mut() {
-      player_sprite_transform.scale.y = 1.0 - (charge_fraction * 0.3);
       player_sprite_transform.translation.y = (-charge_fraction) * 0.2;
+      player_sprite_transform.scale =
+        (Vec3::ONE - Vec3::Y * (charge_fraction * 0.3)) * PLAYER_HEIGHT;
     }
   }
 }
-pub fn sprites_face_camera(camq: Query<&GlobalTransform, With<Camera3d>>,
-                           mut spriteq: Query<(&mut Transform, &GlobalTransform),
-                                 (With<Sprite3dComponent>,
-                                  Without<SunSprite>,
-                                  Without<Camera3d>)>) {
+pub fn face_camera(camq: Query<&GlobalTransform, With<Camera3d>>,
+                   mut camera_facers_q: Query<(&mut Transform, &GlobalTransform),
+                         (With<FaceCamera>, Without<Camera3d>)>) {
   if let Ok(cam_globaltransform) = camq.get_single() {
-    for (mut sprite_transform, sprite_globaltransform) in &mut spriteq {
+    for (mut transform, globaltransform) in &mut camera_facers_q {
       let dir = Vec3 { y: 0.0,
-                       ..(sprite_globaltransform.translation()
-                          - cam_globaltransform.translation()) };
-      sprite_transform.look_to(dir, Vec3::Y);
+                       ..(cam_globaltransform.translation()
+                          - globaltransform.translation()) };
+      transform.look_to(dir, Vec3::Y);
     }
   }
 }
-pub fn gib_sprite_bundle(mut sprite_3d_params: Sprite3dParams,
-                         mut c: Commands,
-                         q: Query<(Entity, &GibSpriteBundle)>) {
-  for (e, GibSpriteBundle(s)) in &q {
-    if sprite_3d_params.images.contains(&s.image) {
-      c.entity(e)
-       .remove::<GibSpriteBundle>()
-       .insert(Sprite3d { image: s.image.clone(),
-                          ..*s }.bundle(&mut sprite_3d_params));
-    }
-  }
-}
+
+// pub fn gib_sprite_bundle(mut sprite_3d_params: Sprite3dParams,
+//                          mut c: Commands,
+//                          q: Query<(Entity, &GibSpriteBundle)>) {
+//   for (e, GibSpriteBundle(s)) in &q {
+//     if sprite_3d_params.images.contains(&s.image) {
+//       c.entity(e)
+//        .remove::<GibSpriteBundle>()
+//        .insert(Sprite3d { image: s.image.clone(),
+//                           ..*s }.bundle(&mut sprite_3d_params));
+//     }
+//   }
+// }
 pub fn spawn_mushroom_man(playerq: Query<&Transform, With<Player>>,
-                          keyboard_input: Res<Input<KeyCode>>,
+                          keyboard_input: Res<ButtonInput<KeyCode>>,
                           mut c: Commands,
                           amah: Res<AllMyAssetHandles>) {
   if let Ok(&player_transform) = playerq.get_single() {
-    if keyboard_input.just_pressed(KeyCode::Z) {
+    if keyboard_input.just_pressed(KeyCode::KeyZ) {
+      let height = 1.3;
       spawn_with_child(&mut c,
                        (PlayerFollower,
                         Friction::new(2.9),
@@ -168,12 +169,14 @@ pub fn spawn_mushroom_man(playerq: Query<&Transform, With<Player>>,
                         ExternalForce::default(),
                         ExternalImpulse::default(),
                         LockedAxes::ROTATION_LOCKED,
-                        Collider::capsule_y(0.4, 0.2),
+                        capsule_from_height_and_radius(height, 0.3),
+                        // Collider::capsule_y(0.4, 0.2),
                         ColliderMassProperties::Mass(0.1),
                         SpatialBundle::from_transform(player_transform)),
-                       GibSpriteBundle(Sprite3d { image: amah.mushroom_man.clone(),
-                                                  pixels_per_metre: 23.0,
-                                                  ..default() }))
+                       (FaceCamera,
+                        billboard(Transform::from_scale(Vec3::splat(height * 1.15)),
+                                  amah.mushroom_man.clone(),
+                                  &amah)));
     }
   }
 }

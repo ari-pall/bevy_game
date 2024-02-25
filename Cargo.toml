@@ -1,4 +1,3 @@
-
 [package]
 name = "bevy_game"
 version = "0.1.0"
@@ -34,12 +33,13 @@ dist = {inherits = "release", lto = "thin"}
 [dependencies]
 rust_utils = {path = "../rust_utils"}
 # bevy_utils = {path = "../bevy_utils"}
-aery = "0.5"
-bevy_third_person_camera = "*"
+# aery = "0.5"
+
+# bevy_third_person_camera = {version = "0.1.8"}
 rand = "*"
-bevy_sprite3d = "*"
-bevy_rapier3d = {version = "0.23.0", features = ["wasm-bindgen"]}
-bevy = { version = "*", default-features = false, features = [
+# bevy_sprite3d = "*"
+bevy_rapier3d = {version = "0.25.0", features = ["wasm-bindgen"]}
+bevy = { version = "0.13", default-features = false, features = [
     "animation",
     "bevy_asset",
     "bevy_gilrs",
@@ -63,8 +63,16 @@ bevy = { version = "*", default-features = false, features = [
     "tonemapping_luts",
     "default_font",
     "webgl2",
+    "wayland",
 ] }
+bevy_third_person_camera = "0.1.9"
 iter-comprehensions = "*"
-bevy-tnua-rapier3d = "*"
-bevy-tnua = "*"
-bevy_vox = "0.8.1"
+# bevy-tnua-rapier3d = "*"
+# bevy-tnua = "*"
+# bevy_vox = "0.8.1"
+# bevy_obj = { version = "0.12", features = ["scene"] }
+# bevy_mod_billboard = "0.5.1"
+#
+bevy_mod_billboard = { git = "https://github.com/kulkalkul/bevy_mod_billboard", rev = "1fabd2214731dedb4b17ce0a0894d22182707759" }
+
+bevy_vox_scene = "0.13.0"

@@ -1,11 +1,9 @@
 pub use bevy::prelude::Name;
 use {bevy::{ecs::system::{SystemParam, SystemState},
-            prelude::{Color, Component, Entity, Input, KeyCode, Query, Res, Transform,
-                      Vec3, World},
+            prelude::{ButtonInput, Color, Component, Entity, KeyCode, Query, Res,
+                      Transform, Vec3, World},
             utils::{HashMap, HashSet}},
-     bevy_sprite3d::Sprite3d,
      rust_utils::{comment, inc, MutateTrait}};
-
 #[derive(Component, Clone)]
 pub struct Crafter;
 #[derive(Component, Clone)]
@@ -26,12 +24,20 @@ impl<const STEPS: u32> u32_cycle<STEPS> {
   pub fn next(&mut self) { self.0 = (self.0 + 1) % STEPS; }
   pub fn fraction(&self) -> f32 { (self.0 as f32) / (STEPS as f32) }
 }
+#[derive(Default, Clone, Debug)]
+pub struct u32_bounded<const MAX: u32>(u32);
+impl<const MAX: u32> u32_bounded<MAX> {
+  pub fn next(&mut self) { self.0 = (self.0 + 1).min(MAX); }
+  pub fn fraction(&self) -> f32 { (self.0 as f32) / (MAX as f32) }
+}
 #[derive(Component, Clone)]
 pub struct SpinningAnimation {
   pub rotation_steps: u32_cycle<430>,
   pub up_down_steps: u32_cycle<520>,
   pub up_down_distance: f32
 }
+#[derive(Component)]
+pub struct FaceCamera;
 const SUN_CYCLE_STEPS: u32 = 8000;
 #[derive(Component, Default)]
 pub struct Sun(pub u32_cycle<SUN_CYCLE_STEPS>);
@@ -39,10 +45,12 @@ pub struct Sun(pub u32_cycle<SUN_CYCLE_STEPS>);
 pub struct SunSprite;
 #[derive(Component, Clone)]
 pub struct IsPlayerSprite;
-#[derive(Component, Clone, Debug)]
+pub const PLAYER_JUMP_CHARGE_LEVEL_MAX: u32 = 130;
+#[derive(Component, Clone, Debug, Default)]
 pub struct Player {
   pub speed_boost: f32,
-  pub jump_charge_level: Option<u16>
+  // pub jump_charge_level: u16
+  pub jump_charge_level: u32_bounded<PLAYER_JUMP_CHARGE_LEVEL_MAX>
 }
 #[derive(Component, Clone, Copy)]
 pub enum ItemPickUp {
@@ -99,8 +107,8 @@ pub struct Fire {
 
 #[derive(Component)]
 pub struct PlayerFollower;
-#[derive(Component)]
-pub struct GibSpriteBundle(pub Sprite3d);
+// #[derive(Component)]
+// pub struct GibSpriteBundle(pub Sprite3d);
 
 // use crate::gamething::Dir;
 

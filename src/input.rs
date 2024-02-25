@@ -1,6 +1,5 @@
 use {crate::components::Player,
-     bevy::prelude::{Input, KeyCode, Res, *},
-     bevy_rapier3d::prelude::{ExternalForce, ExternalImpulse},
+     bevy::prelude::{ButtonInput, KeyCode, Res, *},
      bevy_third_person_camera::ThirdPersonCamera,
      rust_utils::comment};
 pub fn debug_println(t: impl core::fmt::Debug) {
@@ -16,11 +15,11 @@ pub struct JumpStart;
 pub struct JumpEnd;
 // does things based on keyboard input
 fn keyboard_input(// mut movement_event_writer: EventWriter<MoveHorizontallyAction>,
-                  keyboard_input: Res<Input<KeyCode>>,
-                  mouse_button_input: Res<Input<MouseButton>>,
+                  keyboard_input: Res<ButtonInput<KeyCode>>,
+                  mouse_button_input: Res<ButtonInput<MouseButton>>,
                   mut cam_q: Query<&mut ThirdPersonCamera>,
                   mut playerq: Query<&Transform, With<Player>>) {
-  if keyboard_input.just_pressed(KeyCode::L) {
+  if keyboard_input.just_pressed(KeyCode::KeyL) {
     playerq.for_each(debug_println);
   }
   if let Ok(mut cam) = cam_q.get_single_mut() {
@@ -53,7 +52,7 @@ impl Plugin for MyInputPlugin {
   }
 }
 
-fn log_inputs(keys: Res<Input<KeyCode>>) {
+fn log_inputs(keys: Res<ButtonInput<KeyCode>>) {
   keys.get_just_pressed()
       .for_each(|k| println!("{:?} was pressed!", k));
 }
@@ -65,7 +64,7 @@ use {bevy::{prelude::*, utils::HashMap},
 comment! {
 #[derive(Resource, Default)]
 pub struct PressedKeys(pub HashSet<KeyCode>);
-fn get_pressed_keys_system(mut r: ResMut<PressedKeys>, i: Res<Input<KeyCode>>) {
+fn get_pressed_keys_system(mut r: ResMut<PressedKeys>, i: Res<ButtonInput<KeyCode>>) {
   *r.0 = i.get_pressed().collect();
 }
 pub fn get_pressed_keys_plugin(app: &mut App) {
@@ -74,7 +73,7 @@ pub fn get_pressed_keys_plugin(app: &mut App) {
 }
 
   impl GameControl {
-    pub fn pressed(&self, keyboard_input: &Res<Input<KeyCode>>) -> bool {
+    pub fn pressed(&self, keyboard_input: &Res<ButtonInput<KeyCode>>) -> bool {
       let p = |k| keyboard_input.pressed(k);
       match self {
         GameControl::Up => p(KeyCode::W) || p(KeyCode::Up),

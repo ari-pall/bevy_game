@@ -1,8 +1,10 @@
 use {bevy::{asset::embedded_asset,
             gltf::Gltf,
             prelude::*,
-            render::render_resource::{Extent3d, TextureDimension, TextureFormat}},
-     rust_utils::{comment, map}};
+            render::{render_asset::RenderAssetUsages,
+                     render_resource::{Extent3d, TextureDimension, TextureFormat}}},
+     rust_utils::{comment, map},
+     std::cell::OnceCell};
 /// Creates a colorful test pattern
 fn uv_debug_texture() -> Image {
   // DynamicSceneBuilder
@@ -21,10 +23,13 @@ fn uv_debug_texture() -> Image {
                              depth_or_array_layers: 1 },
                   TextureDimension::D2,
                   &texture_data,
-                  TextureFormat::Rgba8UnormSrgb)
+                  TextureFormat::Rgba8UnormSrgb,
+                  RenderAssetUsages::RENDER_WORLD)
 }
 fn colorful_texture() -> Image {
   let texture_size = 8;
+  // Rect
+  // bevy_mod_billboard::text::BillboardTextBounds
   Image::new_fill(Extent3d { width: texture_size,
                              height: texture_size,
                              depth_or_array_layers: 1 },
@@ -32,8 +37,12 @@ fn colorful_texture() -> Image {
                   map(|_| rand::random(),
                       0..((texture_size * texture_size * 4) as usize)).collect::<Vec<u8>>()
                                                                       .as_slice(),
-                  TextureFormat::Rgba8UnormSrgb)
+                  TextureFormat::Rgba8UnormSrgb,
+                  RenderAssetUsages::RENDER_WORLD)
 }
+
+// pub const UNIT_SQUARE: OnceCell<Handle<Mesh>> = OnceCell::new();
+
 pub const GLOWY_COLOR: Color = Color::rgb_linear(13.99, 11.32, 50.0);
 pub const GLOWY_COLOR_2: Color = Color::rgb_linear(10.0, 0.3, 0.0);
 pub const GLOWY_COLOR_3: Color = Color::rgb_linear(0.0, 30.0, 0.0);
@@ -44,12 +53,11 @@ pub struct AllMyAssetHandles {
   pub boxmesh: Handle<Mesh>,
   pub flatbox: Handle<Mesh>,
   pub capsule: Handle<Mesh>,
+  pub unitsquare: Handle<Mesh>,
   pub torus: Handle<Mesh>,
   pub cylinder: Handle<Mesh>,
-  pub icosphere: Handle<Mesh>,
-  pub uvsphere: Handle<Mesh>,
+  pub sphere: Handle<Mesh>,
   pub planesize50: Handle<Mesh>,
-  pub particle_mesh: Handle<Mesh>,
   pub penguin_material: Handle<StandardMaterial>,
   pub particle_material: Handle<StandardMaterial>,
   pub funky_material: Handle<StandardMaterial>,
@@ -110,6 +118,7 @@ impl Plugin for AssetStuffPlugin {
       {$($name: ident, $value: expr)*} => {
         $(let $name = app.world.get_resource_mut::<Assets<_>>().unwrap().add($value);
           amah.$name = $name.clone();)*}}
+
     glb_paths! {
       lunarlander, "lunarlander.glb", "Scene0"
       character_controller_demo_scene, "character_controller_demo.glb", "Scene0"
@@ -130,6 +139,7 @@ impl Plugin for AssetStuffPlugin {
       coffee, "coffee.png"
       stickman, "stickman.png"
       // alevel, "alevel.gltf"
+      // alevel, "alevel.obj"
       grass, "grass.png"
       water, "water.png"
       tree, "tree.png"
@@ -143,57 +153,62 @@ impl Plugin for AssetStuffPlugin {
     StandardMaterial { unlit: true,
                        alpha_mode: AlphaMode::Mask(0.0),
                        ..GLOWY_COLOR_3.into() };
+    let imgmat = |h: Handle<Image>| StandardMaterial { base_color_texture: Some(h),
+                                                       ..default() };
+    // let colmat = |color: Color| StandardMaterial::from(color);
+    let colmat = StandardMaterial::from;
 
+    // bevy::math::Rect{ min: vec2(-0.5,-0.5) , max: vec2(0.5,0.5) }
+    // bevy::math::primitives::Rectangle::new(1.0,1.0)
     assets! {
-      unitcube, shape::Cube { size: 1.0 }.into()
-      cube, shape::Cube { size: 0.7 }.into()
-      boxmesh, shape::Box::default().into()
-      flatbox, shape::Box::new(2.1,0.3,2.1).into()
-      capsule, shape::Capsule::default().into()
-      torus, shape::Torus::default().into()
-      cylinder, shape::Cylinder::default().into()
-      icosphere, shape::Icosphere::default().try_into().unwrap()
-      uvsphere, shape::UVSphere::default().into()
-      planesize50, shape::Plane::from_size(50.0).into()
+      unitcube, bevy::math::primitives::Cuboid::new(1.0,1.0,1.0).mesh()
+      cube, bevy::math::primitives::Cuboid::new(0.7,0.7,0.7).mesh()
+      boxmesh, bevy::math::primitives::Cuboid::new(2.0,1.0,1.0).mesh()
+      flatbox, bevy::math::primitives::Cuboid::new(2.1,0.3,2.1).mesh()
+      capsule, bevy::math::primitives::Capsule3d::default().mesh()
+      torus, bevy::math::primitives::Torus::default().mesh()
+      sphere, bevy::math::primitives::Sphere{radius:1.0}.mesh()
+      planesize50, bevy::math::primitives::Cuboid::new(25.0,0.1,25.0).mesh()
+      unitsquare, bevy::math::primitives::Rectangle::new(1.0,1.0).mesh()
       colorful_image, colorful_texture()
       colorful_material, StandardMaterial::from(colorful_image.clone())
       funky_image, uv_debug_texture()
-      funky_material, funky_image.clone().into()
+      funky_material, imgmat(funky_image.clone())
       glowy_material, StandardMaterial { unlit: true,
                                          alpha_mode: AlphaMode::Mask(0.0),
                                          ..GLOWY_COLOR.into() }
       glowy_material_2, StandardMaterial { unlit: true,
                                            alpha_mode: AlphaMode::Mask(0.0),
-                                           ..GLOWY_COLOR_2.into() }
+                                           ..colmat(GLOWY_COLOR_2).into() }
       glowy_material_3, StandardMaterial { unlit: true,
                                            alpha_mode: AlphaMode::Mask(0.0),
-                                           ..GLOWY_COLOR_3.into() }
+                                           ..colmat(GLOWY_COLOR_3).into() }
       water_material, StandardMaterial { perceptual_roughness:0.3,
                                          base_color: Color::SEA_GREEN,
                                          metallic:0.0,
                                          reflectance:0.5,
-                                         ..water.clone().into()}
+                                         ..imgmat(water.clone())}
       snow_material, StandardMaterial { perceptual_roughness:0.4,
                                         base_color: Color::ALICE_BLUE,
                                         metallic:0.0,
                                         reflectance:0.5,
                                         ior: 1.31,
-                                        ..snow_image.clone().into()}
+                                        ..imgmat(snow_image.clone())}
       stone_material, StandardMaterial { perceptual_roughness:0.8,
                                          base_color: Color::GRAY,
                                          metallic:0.0,
                                          reflectance:0.3,
-                                         ..stone.clone().into()}
+                                         ..imgmat(stone.clone())}
       grass_material, StandardMaterial { perceptual_roughness:0.8,
                                          base_color: Color::GREEN,
                                          metallic:0.0,
                                          reflectance:0.2,
-                                         ..grass.clone().into()}
-      penguin_material, penguin_image.clone().into()
-      particle_material, Color::rgb(0.2, 0.7, 0.9).into()
-      particle_mesh, shape::Icosphere { radius: 0.06 as f32,
-                                        ..default() }.try_into().unwrap()
+                                         ..imgmat(grass.clone())}
+      penguin_material, imgmat(penguin_image.clone())
+      particle_material, colmat(Color::rgb(0.2, 0.7, 0.9))
+
     }
+    // UNIT_SQUARE.set(unitsquare).unwrap();
     app.insert_resource(amah);
   }
 }

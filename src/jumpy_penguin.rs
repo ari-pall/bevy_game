@@ -1,10 +1,6 @@
-use {crate::{assetstuff::AllMyAssetHandles,
-             components::{GibSpriteBundle, Player}},
-     bevy::{math::vec3, prelude::*},
+use {bevy::{math::vec3, prelude::*},
      bevy_rapier3d::prelude::*,
-     bevy_sprite3d::Sprite3d,
-     bevy_third_person_camera::{ThirdPersonCamera, ThirdPersonCameraTarget},
-     rust_utils::{comment, map, mapv, vec},
+     rust_utils::{map, vec},
      std::iter::{Cycle, Peekable}};
 
 pub struct IceBerg;

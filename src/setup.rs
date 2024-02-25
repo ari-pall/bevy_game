@@ -1,19 +1,39 @@
-use std::f32::consts::TAU;
+use bevy::a11y::accesskit::TextAlign;
 
 use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_COLOR_3},
-             components::{name, pick, GibSpriteBundle, ItemPickUp, Player,
+             components::{name, FaceCamera, IsPlayerSprite, ItemPickUp, Player,
                           SpinningAnimation, Sun, SunSprite},
              jumpy_penguin::SegmentPathMotion,
              update::{capsule_from_height_and_radius, PLAYER_HEIGHT, PLAYER_RADIUS}},
      bevy::{core_pipeline::{self, bloom::BloomSettings},
             math::vec3,
-            pbr::{NotShadowCaster, NotShadowReceiver},
+            pbr::NotShadowCaster,
             prelude::*},
+     bevy_mod_billboard::{BillboardDepth, BillboardLockAxis, BillboardLockAxisBundle,
+                          BillboardMeshHandle, BillboardTextBundle,
+                          BillboardTextureBundle, BillboardTextureHandle},
      bevy_rapier3d::prelude::*,
-     bevy_sprite3d::Sprite3d,
      bevy_third_person_camera::{ThirdPersonCamera, ThirdPersonCameraTarget},
-     rust_utils::comment,
-     std::f32::consts::PI};
+     rust_utils::comment};
+
+pub fn billboard(transform: Transform,
+                 image_handle: Handle<Image>,
+                 amah: &Res<AllMyAssetHandles>)
+                 -> impl Bundle {
+  BillboardLockAxisBundle { billboard_bundle:
+                              BillboardTextureBundle { transform,
+                                                       texture:
+                                                         BillboardTextureHandle(image_handle),
+                                                       mesh:
+                                                         BillboardMeshHandle(amah.unitsquare
+                                                                                 .clone()),
+                                                       billboard_depth:
+                                                         BillboardDepth(true),
+                                                       ..default() },
+                            lock_axis: BillboardLockAxis { y_axis: true,
+                                                           rotation: true } }
+}
+
 pub fn spawn_with_child(c: &mut Commands, a: impl Bundle, b: impl Bundle) {
   c.spawn(a).with_children(|x| {
               x.spawn(b);
@@ -44,6 +64,22 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                       shadows_enabled: true,
                                                       ..default() },
                             ..default() });
+  spawn!(BillboardTextBundle {
+    transform: Transform::from_translation(vec3(23.128942, 3.8398309, 3.602163))
+      .with_scale(Vec3::splat(0.0085)),
+    text: Text::from_sections([
+      TextSection {
+        value: "IMPORTANT".to_string(),
+        style: text_style.clone()
+      },
+      TextSection {
+        value: " text".to_string(),
+        style: text_style.clone()
+      }
+    ]).with_justify(JustifyText::Center),
+    ..default()
+  });
+  // Vec3(23.128942, 3.8398309, 3.602163)
 
   let iceberg = |mut spm: SegmentPathMotion| {
     (RigidBody::KinematicVelocityBased,
@@ -73,10 +109,13 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   spawn!(up_down_iceberg(vec3(5.343936, -3.0, -2.4758048), 4.0, 0.5));
   spawn!(up_down_iceberg(vec3(9.069067, -4.0, -5.0675673), 4.0, 0.4));
   spawn!(up_down_iceberg(vec3(12.84221, -6.0, -4.947112), 4.0, 0.3));
-  spawn!(GibSpriteBundle(Sprite3d { image: amah.iceberg.clone(),
-                                    transform: Transform::from_xyz(-30.0, 0.0, -40.0),
-                                    pixels_per_metre: 1.5,
-                                    ..default() }));
+  spawn!(billboard(Transform::from_xyz(-30.0, 0.0, -40.0).with_scale(Vec3::splat(7.0)),
+                   amah.iceberg.clone(),
+                   &amah));
+  // GibSpriteBundle(Sprite3d { image: amah.iceberg.clone(),
+  //          transform: Transform::from_xyz(-30.0, 0.0, -40.0),
+  //          pixels_per_metre: 1.5,
+  //          ..default() }));
   spawn!((RigidBody::Fixed,
           AsyncCollider(ComputedColliderShape::ConvexHull),
           PbrBundle { mesh: amah.planesize50.clone(),
@@ -107,13 +146,32 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           SceneBundle { scene: amah.turtle_level.clone(),
                         transform: Transform::from_xyz(40.0, -10.0, -40.0),
                         ..default() }));
+  let glowy_sphere = |transform| {
+    (PointLightBundle { transform,
+                        point_light: PointLight { intensity: 400.0,
+                                                  radius: 1.0,
+                                                  // range: 100.0,
+                                                  shadows_enabled: true,
+                                                  color: GLOWY_COLOR,
+                                                  ..default() },
+                        ..default() },
+     (PbrBundle { mesh: amah.sphere.clone(),
+                  material: amah.glowy_material.clone(),
+                  ..default() },
+      NotShadowCaster,
+      RigidBody::Fixed,
+      Friction::default(),
+      Velocity::default(),
+      AsyncCollider(ComputedColliderShape::ConvexHull)))
+  };
+  let (light, sphere) = glowy_sphere(Transform::from_xyz(22.709263, -26.007673, 72.32278));
+  spawn!(light, sphere);
   spawn!((RigidBody::Fixed,
           // Friction::new(0.1),
           AsyncSceneCollider { shape: Some(ComputedColliderShape::TriMesh),
                                named_shapes: default() },
           SceneBundle { scene: amah.alevel.clone(),
-                        transform: Transform::from_xyz(40.0, -30.0, 60.0)
-                        .with_rotation(Quat::from_rotation_x(0.0 / 4.0)),
+                        transform: Transform::from_xyz(40.0, -30.0, 60.0),
                         ..default() }));
   spawn!((Sun::default(),
           DirectionalLightBundle { directional_light:
@@ -125,21 +183,10 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                         // shadow_normal_bias: todo!()
                                    },
                                    ..default() }));
-  spawn!((GibSpriteBundle(Sprite3d { image: amah.sun.clone(),
-                                     unlit: true,
-                                     alpha_mode: AlphaMode::Mask(0.0),
-                                     pixels_per_metre: 1.3,
-                                     emissive: Color::rgb(20.0, 20.0, 0.0),
-                                     ..default() }),
-          // PointLight { intensity: 400.0,
-          //              radius: 1.0,
-          //              // range: 100.0,
-          //              shadows_enabled: false,
-          //              color: Color::YELLOW,
-          //              ..default() },
-          NotShadowCaster,
-          NotShadowReceiver,
-          SunSprite));
+  spawn!((SunSprite,
+          billboard(Transform::from_scale(Vec3::splat(20.0)),
+                    amah.sun.clone(),
+                    &amah)));
   // ScreenSpaceAmbientOcclusionPlugin
   // Camera
   spawn!((Camera3dBundle { camera: Camera { hdr: true,
@@ -151,7 +198,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           // FogSettings { color: Color::rgb(0.2, 0.2, 0.4),
           //               falloff: FogFalloff::ExponentialSquared { density: 0.01 },
           //               ..default() },
-          UiCameraConfig { show_ui: true },
+          // UiCameraConfig { show_ui: true },
           BloomSettings { intensity: 0.22,
                           ..default() },
           // Skybox(amah.skybox.clone()),
@@ -216,7 +263,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                 NotShadowCaster,
                 // MassPropertiesBundle::default(),
                 AsyncCollider(ComputedColliderShape::ConvexHull),
-                PbrBundle { mesh: amah.uvsphere.clone(),
+                PbrBundle { mesh: amah.sphere.clone(),
                             material: amah.glowy_material_2.clone(),
                             transform: transform.with_scale(Vec3::ONE * 0.4),
                             ..default() }),
@@ -228,68 +275,39 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                   ..default() })
       }
       'p' => {
-        // let player_height = 1.8;
-        // let player_radius = 0.3;
         let player_friction = 1.0;
         let player_collider = capsule_from_height_and_radius(PLAYER_HEIGHT, PLAYER_RADIUS);
-        // let player_collider =
-        //   Collider::capsule_y(player_height / 2.0 - player_radius, player_radius);
-        // let player_density = 1.0;
         let player_mass = 0.3;
-        // RapierContext
-        // QueryPipeline::intersections_with_shape()
-        // TnuaSimpleAirActionsCounter
-        // let player_tnua_controller_bundle =
-        //   TnuaControllerBundle { controller: TnuaController::default(),
-        //                          motor: TnuaMotor::default(),
-        //                          rigid_body_tracker: TnuaRigidBodyTracker::default(),
-        //                          proximity_sensor: TnuaProximitySensor::default() };
-        spawn_with_child(
-                         &mut c,
-                         (
-          Player { speed_boost: 0.0,
-                   jump_charge_level: None },
-          ColliderMassProperties::Mass(player_mass),
-          Friction { combine_rule: CoefficientCombineRule::Multiply,
-                     coefficient: player_friction },
-          Restitution { coefficient: 0.0,
+        spawn!(SpatialBundle::from_transform(transform),
+               (FaceCamera,
+                billboard(Transform::from_scale(Vec3::splat(2.0)),
+                          amah.stickman.clone(),
+                          &amah)));
+        spawn!((Player::default(),
+                ColliderMassProperties::Mass(player_mass),
+                Friction { combine_rule: CoefficientCombineRule::Multiply,
+                           coefficient: player_friction },
+                Restitution { coefficient: 0.0,
 
-                        combine_rule: CoefficientCombineRule::Multiply },
-          ExternalImpulse::default(),
-          ExternalForce::default(),
-          Velocity::default(),
-          RigidBody::Dynamic,
-          ThirdPersonCameraTarget,
-          LockedAxes::ROTATION_LOCKED,
-          SpatialBundle::from_transform(transform),
-          player_collider // ActiveCollisionTypes::DYNAMIC_STATIC,
-                          // player_shape_caster
-                          // bevy_tnua::prelude::TnuaControllerBundle::default(),
-                          // player_tnua_controller_bundle,
-                          // bevy_tnua_rapier3d::TnuaRapier3dIOBundle::default()
-        ),
-                         (
-          crate::components::IsPlayerSprite,
-          GibSpriteBundle(Sprite3d { image: amah.stickman.clone(),
-                                     pixels_per_metre: 19.0,
-                                     emissive: pick([
-            Color::AZURE,
-            Color::PURPLE,
-            Color::CRIMSON,
-            Color::YELLOW,
-            Color::GREEN,
-            Color::TOMATO
-          ]),
-                                     ..default() })
-        )
-        )
+                              combine_rule: CoefficientCombineRule::Multiply },
+                ExternalImpulse::default(),
+                ExternalForce::default(),
+                Velocity::default(),
+                RigidBody::Dynamic,
+                ThirdPersonCameraTarget,
+                LockedAxes::ROTATION_LOCKED,
+                SpatialBundle::from_transform(transform),
+                player_collider),
+               (IsPlayerSprite,
+                FaceCamera,
+                billboard(Transform::from_scale(Vec3::splat(PLAYER_HEIGHT)),
+                          amah.stickman.clone(),
+                          &amah)))
       }
       't' => spawn!((RigidBody::Fixed,
-                     Collider::capsule_y(0.6, 0.2),
-                     GibSpriteBundle(Sprite3d { image: amah.tree.clone(),
-                                                transform,
-                                                pixels_per_metre: 12.0,
-                                                ..default() }))),
+                     capsule_from_height_and_radius(0.8, 0.2),
+                     FaceCamera,
+                     billboard(transform, amah.tree.clone(), &amah))),
       'C' => {
         spawn!((ItemPickUp::SpeedBoost,
                 SceneBundle { transform,
@@ -312,22 +330,24 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                    transform,
                                    ..default() })),
       'l' => {
-        spawn!(PointLightBundle { transform,
-                                  point_light: PointLight { intensity: 400.0,
-                                                            radius: 1.0,
-                                                            // range: 100.0,
-                                                            shadows_enabled: true,
-                                                            color: GLOWY_COLOR,
-                                                            ..default() },
-                                  ..default() },
-               (PbrBundle { mesh: amah.uvsphere.clone(),
-                            material: amah.glowy_material.clone(),
-                            ..default() },
-                NotShadowCaster,
-                RigidBody::Fixed,
-                Friction::default(),
-                Velocity::default(),
-                AsyncCollider(ComputedColliderShape::ConvexHull)))
+        let (light, sphere) = glowy_sphere(transform);
+        spawn!(light, sphere);
+        // spawn!(PointLightBundle { transform,
+        //                           point_light: PointLight { intensity: 400.0,
+        //                                                     radius: 1.0,
+        //                                                     // range: 100.0,
+        //                                                     shadows_enabled: true,
+        //                                                     color: GLOWY_COLOR,
+        //                                                     ..default() },
+        //                           ..default() },
+        //        (PbrBundle { mesh: amah.uvsphere.clone(),
+        //                     material: amah.glowy_material.clone(),
+        //                     ..default() },
+        //         NotShadowCaster,
+        //         RigidBody::Fixed,
+        //         Friction::default(),
+        //         Velocity::default(),
+        //         AsyncCollider(ComputedColliderShape::ConvexHull)))
       }
       'd' => {
         spawn!((RigidBody::Dynamic,
