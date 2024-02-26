@@ -191,7 +191,6 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                      // shadow_depth_bias: todo!(),
                                                      // shadow_normal_bias: todo!()
                                   },
-                                  // transform: Transform::looking_to
                                   ..default() });
   // ScreenSpaceAmbientOcclusionPlugin
   // Camera

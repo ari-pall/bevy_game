@@ -1,3 +1,5 @@
+use bevy::math::primitives;
+
 use {bevy::{asset::embedded_asset,
             gltf::Gltf,
             prelude::*,
@@ -161,15 +163,15 @@ impl Plugin for AssetStuffPlugin {
     // bevy::math::Rect{ min: vec2(-0.5,-0.5) , max: vec2(0.5,0.5) }
     // bevy::math::primitives::Rectangle::new(1.0,1.0)
     assets! {
-      unitcube, bevy::math::primitives::Cuboid::new(1.0,1.0,1.0).mesh()
-      cube, bevy::math::primitives::Cuboid::new(0.7,0.7,0.7).mesh()
-      boxmesh, bevy::math::primitives::Cuboid::new(2.0,1.0,1.0).mesh()
-      flatbox, bevy::math::primitives::Cuboid::new(2.1,0.3,2.1).mesh()
-      capsule, bevy::math::primitives::Capsule3d::default().mesh()
-      torus, bevy::math::primitives::Torus::default().mesh()
-      sphere, bevy::math::primitives::Sphere{radius:1.0}.mesh()
-      planesize50, bevy::math::primitives::Cuboid::new(25.0,0.1,25.0).mesh()
-      unitsquare, bevy::math::primitives::Rectangle::new(1.0,1.0).mesh()
+      unitcube, primitives::Cuboid::new(1.0,1.0,1.0).mesh()
+      cube, primitives::Cuboid::new(0.7,0.7,0.7).mesh()
+      boxmesh, primitives::Cuboid::new(2.0,1.0,1.0).mesh()
+      flatbox, primitives::Cuboid::new(2.1,0.3,2.1).mesh()
+      capsule, primitives::Capsule3d::default().mesh()
+      torus, primitives::Torus::default().mesh()
+      sphere, primitives::Sphere{radius:1.0}.mesh()
+      planesize50, primitives::Cuboid::new(25.0,0.1,25.0).mesh()
+      unitsquare, primitives::Rectangle::new(1.0,1.0).mesh()
       colorful_image, colorful_texture()
       colorful_material, StandardMaterial::from(colorful_image.clone())
       funky_image, uv_debug_texture()

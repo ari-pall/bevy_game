@@ -27,7 +27,7 @@ exclude = [
 
 [profile]
 dev = {package."*" = {opt-level = 1}, opt-level = 1}
-release = {lto = "fat", codegen-units = 1, opt-level = "z"}
+release = {lto = "fat", codegen-units = 1, opt-level = 3}
 # wasm-release = {inherits = "release", lto = true, codegen-units = 1,opt-level = 3}
 # The profile that 'cargo dist' will build with
 dist = {inherits = "release", lto = "fat"}
