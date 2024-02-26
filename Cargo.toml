@@ -52,7 +52,7 @@ bevy = { version = "0.13", default-features = false, features = [
     "bevy_scene",
     "bevy_winit",
     "bevy_core_pipeline",
-    "bevy_pbr",
+    # "bevy_pbr",
     "bevy_gltf",
     "bevy_render",
     "bevy_sprite",
@@ -69,7 +69,7 @@ bevy = { version = "0.13", default-features = false, features = [
     "tonemapping_luts",
     "default_font",
     "webgl2",
-    "wayland",
+    # "wayland",
 ] }
 bevy_third_person_camera = "0.1.9"
 iter-comprehensions = "*"

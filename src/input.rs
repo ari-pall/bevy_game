@@ -1,3 +1,5 @@
+use bevy::window::{CursorGrabMode, PrimaryWindow};
+
 use {crate::components::Player,
      bevy::prelude::{ButtonInput, KeyCode, Res, *},
      bevy_third_person_camera::ThirdPersonCamera,
@@ -16,8 +18,14 @@ pub struct JumpEnd;
 // does things based on keyboard input
 fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>,
                   mouse_button_input: Res<ButtonInput<MouseButton>>,
+                  mut window_q: Query<&mut Window, With<PrimaryWindow>>,
                   mut cam_q: Query<&mut ThirdPersonCamera>,
                   mut playerq: Query<&Transform, With<Player>>) {
+  if keyboard_input.just_pressed(KeyCode::KeyR) {
+    if let Ok(mut window) = window_q.get_single_mut() {
+      window.cursor.grab_mode = CursorGrabMode::None;
+    }
+  }
   if keyboard_input.just_pressed(KeyCode::KeyL) {
     playerq.iter().for_each(debug_println);
   }

@@ -3,6 +3,7 @@ use {bevy::{ecs::system::{SystemParam, SystemState},
             prelude::*,
             text::{Text, TextStyle},
             utils::{HashMap, HashSet}},
+     bevy_mod_billboard::BillboardTextureBundle,
      rust_utils::{comment, inc, MutateTrait}};
 #[derive(Component, Clone)]
 pub struct Crafter;
@@ -61,10 +62,9 @@ pub struct Message {
 pub fn message(text: &str, origin_pos: Vec3) -> impl Bundle {
   (Message{ age_ticks: 0, origin_pos },
    BillboardTextBundle {
-     transform: Transform::from_translation(origin_pos)
-       .with_scale(Vec3::splat(0.0085)),
-     text: Text::from_section(text, TextStyle { font_size: 27.0,
-                                                color: Color::WHITE,
+     transform: Transform::from_scale(Vec3::splat(0.0)),
+     text: Text::from_section(text, TextStyle { font_size: 30.0,
+                                                color: Color::RED,
                                                 ..default() }).with_justify(JustifyText::Center),
      ..default()
    })

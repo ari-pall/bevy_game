@@ -1,14 +1,15 @@
-use bevy::core_pipeline::bloom::{BloomCompositeMode, BloomPrefilterSettings};
-
 use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_COLOR_3},
              components::{name, FaceCamera, IsPlayerSprite, ItemPickUp, Player,
-                          SpinningAnimation, Sun, SunSprite},
+                          SpinningAnimation, Sun},
              jumpy_penguin::SegmentPathMotion,
              update::{capsule_from_height_and_radius, PLAYER_HEIGHT, PLAYER_RADIUS}},
-     bevy::{core_pipeline::{self, bloom::BloomSettings},
+     bevy::{core_pipeline::{self,
+                            bloom::{BloomCompositeMode, BloomPrefilterSettings,
+                                    BloomSettings}},
             math::vec3,
             pbr::NotShadowCaster,
-            prelude::*},
+            prelude::*,
+            render::camera::Exposure},
      bevy_mod_billboard::{BillboardDepth, BillboardLockAxis, BillboardLockAxisBundle,
                           BillboardMeshHandle, BillboardTextBundle,
                           BillboardTextureBundle, BillboardTextureHandle},
@@ -185,18 +186,20 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                     &amah)),
          DirectionalLightBundle { directional_light:
                                     DirectionalLight { color: Color::WHITE,
-                                                     illuminance: 11000.0,
-                                                     shadows_enabled: true,
-                                                     ..default()
-                                                     // shadow_depth_bias: todo!(),
-                                                     // shadow_normal_bias: todo!()
-                                  },
+                                                       illuminance: 11000.0,
+                                                       shadows_enabled: true,
+                                                       ..default()
+                                                       // shadow_depth_bias: todo!(),
+                                                       // shadow_normal_bias: todo!()
+                                    },
                                   ..default() });
+
   // ScreenSpaceAmbientOcclusionPlugin
   // Camera
   spawn!((Camera3dBundle { camera: Camera { hdr: true,
 
                                             ..default() },
+                           exposure: Exposure { ev100: 10.0 },
                            tonemapping:
                              core_pipeline::tonemapping::Tonemapping::Reinhard,
                            ..default() },
@@ -204,6 +207,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           //               falloff: FogFalloff::ExponentialSquared { density: 0.01 },
           //               ..default() },
           // UiCameraConfig { show_ui: true },
+          // Exposure::OVERCAST,
           BloomSettings { intensity: 0.5,
                           low_frequency_boost: 0.0,
                           prefilter_settings: BloomPrefilterSettings { threshold:
@@ -377,6 +381,21 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                             color: GLOWY_COLOR_3,
                                                             ..default() },
                                   ..default() })
+      }
+      'y' => {
+        spawn!((RigidBody::Dynamic,
+                ColliderMassProperties::Density(1.0),
+                // NotShadowCaster,
+                // MassPropertiesBundle::default(),
+                AsyncCollider(ComputedColliderShape::ConvexHull),
+                Restitution { coefficient: 0.0,
+                              combine_rule: CoefficientCombineRule::Multiply },
+                // Friction { coefficient: 0.2,
+                //            combine_rule: CoefficientCombineRule::Multiply },
+                PbrBundle { mesh: amah.sphere.clone(),
+                            material: amah.snow_material.clone(),
+                            transform: transform.with_scale(Vec3::splat(0.4)),
+                            ..default() }))
       }
       _ => () // _ => panic!("{:?}, {tile}", coords),
     }

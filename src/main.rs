@@ -50,6 +50,7 @@ pub fn main() {
         .set(ImagePlugin::default_nearest())
         .set(WindowPlugin {
           primary_window: Some(Window {
+            // cursor: Cursor
             present_mode: window::PresentMode::AutoNoVsync,
             title: "bevy_game".to_string(),
             canvas: Some("#bevy".to_string()),

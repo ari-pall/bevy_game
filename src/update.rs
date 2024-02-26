@@ -2,10 +2,10 @@ use {crate::{assetstuff::AllMyAssetHandles,
              components::{message, FaceCamera, IsPlayerSprite, ItemPickUp, Message,
                           Player, PlayerFollower, SpinningAnimation, Sun},
              setup::{billboard, spawn_with_2_children}},
-     bevy::prelude::*,
+     bevy::{input::mouse::MouseMotion, prelude::*},
      bevy_rapier3d::prelude::*,
      rust_utils::vec,
-     std::f32::consts::TAU};
+     std::f32::consts::{PI, TAU}};
 fn avg<T: std::iter::Sum + std::ops::Div<f32, Output = T>>(coll: impl IntoIterator<Item = T>)
                                                            -> Option<T> {
   let v = vec(coll);
@@ -35,21 +35,18 @@ pub fn player_movement(keyboard_input: Res<ButtonInput<KeyCode>>,
                               &mut ExternalForce,
                               &mut ExternalImpulse,
                               &mut Velocity,
-                              &mut Friction,
                               &Transform,
                               &mut Player)>) {
   if let (Ok((player_entity,
               mut player_force,
               mut player_impulse,
               mut player_vel,
-              mut player_friction,
               player_transform,
               mut player)),
           Ok(cam_transform)) = (playerq.get_single_mut(), camq.get_single())
   {
     let player_walk_zone =
       capsule_from_height_and_radius(PLAYER_HEIGHT * 1.02, PLAYER_RADIUS * 1.02);
-    // player_friction.coefficient = if player_vel.linvel.y > 0.03 { 0.0 } else { 1.0 };
     let player_max_speed = PLAYER_MAX_SPEED + player.speed_boost;
     let mut entities_colliding_with_player = Vec::new();
     rapier_context.intersections_with_shape(
@@ -225,31 +222,26 @@ pub fn spinning_animation(mut q: Query<(&mut Transform, &mut SpinningAnimation)>
     sa.up_down_steps.next();
   }
 }
-pub const MESSAGE_SHOW_TIME_TICKS: u32 = 190;
+pub const MESSAGE_SHOW_TIME_TICKS: u32 = 210;
 pub const MESSAGE_RAISE_ALT: f32 = 1.2;
-pub const MESSAGE_RAISE_TIME_TICKS: u32 = 50;
+// pub const MESSAGE_RAISE_TIME_TICKS: u32 = 50;
 pub fn show_message(mut q: Query<(Entity, &mut Transform, &mut Message)>, mut c: Commands) {
   for (e, mut t, mut m) in &mut q {
     if m.age_ticks > MESSAGE_SHOW_TIME_TICKS {
       c.entity(e).despawn();
     } else {
-      t.translation.y = m.origin_pos.y
-                        + MESSAGE_RAISE_ALT
-                          * if m.age_ticks > MESSAGE_RAISE_TIME_TICKS {
-                            1.0
-                          } else {
-                            (m.age_ticks as f32) / (MESSAGE_RAISE_TIME_TICKS as f32)
-                          };
+      let scale =
+        (((m.age_ticks as f32) / (MESSAGE_SHOW_TIME_TICKS as f32)) * PI).sin()
+                                                                        .powf(0.17);
+      t.translation = m.origin_pos + (Vec3::Y * MESSAGE_RAISE_ALT * scale);
+      t.scale = Vec3::splat(0.0085 * scale);
+
       m.age_ticks += 1;
     }
   }
 }
 pub fn sun_movement(mut camq: Query<&GlobalTransform, With<Camera3d>>,
-                    mut sunq: Query<(&mut Sun, &mut Transform)> // mut sun_sprite_q: Query<&mut Transform,
-                                                                //       (With<SunSprite>,
-                                                                //        Without<Camera3d>,
-                                                                //        Without<Sun>)>
-) {
+                    mut sunq: Query<(&mut Sun, &mut Transform)>) {
   if let (Ok(camera_globaltransform), Ok((mut sun, mut sun_transform))) =
     (camq.get_single(), sunq.get_single_mut())
   {
@@ -266,3 +258,29 @@ pub fn sun_movement(mut camq: Query<&GlobalTransform, With<Camera3d>>,
     sun_transform.look_to(dir, Vec3::Y);
   }
 }
+
+// pub fn camera(mut camq: Query<(&mut Transform), With<Camera3d>>,
+//               keys: Res<ButtonInput<KeyCode>>,
+//               window_q: Query<&Window, With<PrimaryWindow>>,
+//               mouse: Res<ButtonInput<MouseButton>>,
+//               mut mouse_evr: EventReader<MouseMotion>,
+//               mut scroll_evr: EventReader<MouseWheel>,
+//               mut playerq: Query<&Transform, With<Player>>) {
+//   if let Ok(window) = window_q.get_single() {
+//     window.cursor.grab_mode
+// }
+//   for (e, mut t, mut m) in &mut q {
+//     if m.age_ticks > MESSAGE_SHOW_TIME_TICKS {
+//       c.entity(e).despawn();
+//     } else {
+//       t.translation.y = m.origin_pos.y
+//                         + MESSAGE_RAISE_ALT
+//                           * if m.age_ticks > MESSAGE_RAISE_TIME_TICKS {
+//                             1.0
+//                           } else {
+//                             (m.age_ticks as f32) / (MESSAGE_RAISE_TIME_TICKS as f32)
+//                           };
+//       m.age_ticks += 1;
+//     }
+//   }
+// }

@@ -1,7 +1,6 @@
-use bevy::math::primitives;
-
 use {bevy::{asset::embedded_asset,
             gltf::Gltf,
+            math::primitives,
             prelude::*,
             render::{render_asset::RenderAssetUsages,
                      render_resource::{Extent3d, TextureDimension, TextureFormat}}},
@@ -30,8 +29,6 @@ fn uv_debug_texture() -> Image {
 }
 fn colorful_texture() -> Image {
   let texture_size = 8;
-  // Rect
-  // bevy_mod_billboard::text::BillboardTextBounds
   Image::new_fill(Extent3d { width: texture_size,
                              height: texture_size,
                              depth_or_array_layers: 1 },
