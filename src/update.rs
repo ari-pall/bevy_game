@@ -1,7 +1,7 @@
 use {crate::{assetstuff::AllMyAssetHandles,
-             components::{FaceCamera, IsPlayerSprite, ItemPickUp, Player, PlayerFollower,
-                          SpinningAnimation, Sun, SunSprite},
-             setup::{billboard, spawn_with_child}},
+             components::{message, FaceCamera, IsPlayerSprite, ItemPickUp, Message,
+                          Player, PlayerFollower, SpinningAnimation, Sun},
+             setup::{billboard, spawn_with_2_children}},
      bevy::prelude::*,
      bevy_rapier3d::prelude::*,
      rust_utils::vec,
@@ -161,22 +161,23 @@ pub fn spawn_mushroom_man(playerq: Query<&Transform, With<Player>>,
   if let Ok(&player_transform) = playerq.get_single() {
     if keyboard_input.just_pressed(KeyCode::KeyZ) {
       let height = 1.3;
-      spawn_with_child(&mut c,
-                       (PlayerFollower,
-                        Friction::new(2.9),
-                        RigidBody::Dynamic,
-                        Velocity::default(),
-                        ExternalForce::default(),
-                        ExternalImpulse::default(),
-                        LockedAxes::ROTATION_LOCKED,
-                        capsule_from_height_and_radius(height, 0.3),
-                        // Collider::capsule_y(0.4, 0.2),
-                        ColliderMassProperties::Mass(0.1),
-                        SpatialBundle::from_transform(player_transform)),
-                       (FaceCamera,
-                        billboard(Transform::from_scale(Vec3::splat(height * 1.15)),
-                                  amah.mushroom_man.clone(),
-                                  &amah)));
+      spawn_with_2_children(&mut c,
+                            (PlayerFollower,
+                             Friction::new(2.9),
+                             RigidBody::Dynamic,
+                             Velocity::default(),
+                             ExternalForce::default(),
+                             ExternalImpulse::default(),
+                             LockedAxes::ROTATION_LOCKED,
+                             capsule_from_height_and_radius(height, 0.3),
+                             // Collider::capsule_y(0.4, 0.2),
+                             ColliderMassProperties::Mass(0.1),
+                             SpatialBundle::from_transform(player_transform)),
+                            (FaceCamera,
+                             billboard(Transform::from_scale(Vec3::splat(height * 1.15)),
+                                       amah.mushroom_man.clone(),
+                                       &amah)),
+                            message("spawned a mushroom man", default()));
     }
   }
 }
@@ -224,28 +225,44 @@ pub fn spinning_animation(mut q: Query<(&mut Transform, &mut SpinningAnimation)>
     sa.up_down_steps.next();
   }
 }
+pub const MESSAGE_SHOW_TIME_TICKS: u32 = 190;
+pub const MESSAGE_RAISE_ALT: f32 = 1.2;
+pub const MESSAGE_RAISE_TIME_TICKS: u32 = 50;
+pub fn show_message(mut q: Query<(Entity, &mut Transform, &mut Message)>, mut c: Commands) {
+  for (e, mut t, mut m) in &mut q {
+    if m.age_ticks > MESSAGE_SHOW_TIME_TICKS {
+      c.entity(e).despawn();
+    } else {
+      t.translation.y = m.origin_pos.y
+                        + MESSAGE_RAISE_ALT
+                          * if m.age_ticks > MESSAGE_RAISE_TIME_TICKS {
+                            1.0
+                          } else {
+                            (m.age_ticks as f32) / (MESSAGE_RAISE_TIME_TICKS as f32)
+                          };
+      m.age_ticks += 1;
+    }
+  }
+}
 pub fn sun_movement(mut camq: Query<&GlobalTransform, With<Camera3d>>,
-                    mut sunq: Query<(&mut Sun, &mut Transform), Without<Camera3d>>,
-                    mut sun_sprite_q: Query<&mut Transform,
-                          (With<SunSprite>,
-                           Without<Camera3d>,
-                           Without<Sun>)>) {
-  if let (Ok(camera_globaltransform),
-          Ok((mut sun, mut sun_transform)),
-          Ok(mut sun_sprite_transform)) =
-    (camq.get_single(), sunq.get_single_mut(), sun_sprite_q.get_single_mut())
+                    mut sunq: Query<(&mut Sun, &mut Transform)> // mut sun_sprite_q: Query<&mut Transform,
+                                                                //       (With<SunSprite>,
+                                                                //        Without<Camera3d>,
+                                                                //        Without<Sun>)>
+) {
+  if let (Ok(camera_globaltransform), Ok((mut sun, mut sun_transform))) =
+    (camq.get_single(), sunq.get_single_mut())
   {
     sun.0.next();
     let rot_radians = sun.0.fraction() * TAU;
     let cam_pos = camera_globaltransform.translation();
-    let sun_pos = cam_pos
-                  + Vec3 { x: rot_radians.cos() * 100.0,
-                           y: 60.0,
-                           z: rot_radians.sin() * 100.0 };
-    sun_sprite_transform.translation = sun_pos;
+    let new_sun_pos = cam_pos
+                      + Vec3 { x: rot_radians.cos() * 100.0,
+                               y: 60.0,
+                               z: rot_radians.sin() * 100.0 };
+    sun_transform.translation = new_sun_pos;
 
-    let dir = cam_pos - sun_pos;
+    let dir = cam_pos - new_sun_pos;
     sun_transform.look_to(dir, Vec3::Y);
-    sun_sprite_transform.look_to(dir, Vec3::Y);
   }
 }

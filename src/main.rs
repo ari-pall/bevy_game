@@ -50,18 +50,9 @@ pub fn main() {
         .set(ImagePlugin::default_nearest())
         .set(WindowPlugin {
           primary_window: Some(Window {
-            // resolution:window::WindowResolution::new(1080.0,1080.0*3./4.),
-            // cursor: window::Cursor{
-            //   // grab_mode: window::CursorGrabMode::Confined ,
-            //   visible: false,
-            //   ..default()},
-            // mode: window::WindowMode::BorderlessFullscreen,
-            // mode: window::WindowMode::SizedFullscreen,
             present_mode: window::PresentMode::AutoNoVsync,
             title: "bevy_game".to_string(),
             canvas: Some("#bevy".to_string()),
-            // fit_canvas_to_parent: true,
-            // prevent_default_event_handling: todo!(),
             ..default()
           }),
           ..default()
@@ -71,15 +62,8 @@ pub fn main() {
       assetstuff::AssetStuffPlugin,
       ThirdPersonCameraPlugin,
       bevy_mod_billboard::prelude::BillboardPlugin,
-      // Aery,
-      // bevy_tnua_rapier3d::TnuaRapier3dPlugin,
-      // bevy_tnua::prelude::TnuaControllerPlugin,
-      // bevy_sprite3d::Sprite3dPlugin,
       bevy_rapier3d::prelude::RapierPhysicsPlugin::<NoUserData>::default(),
-      input::MyInputPlugin, // game::game_plugin,
-                            // input::keylogger,
-                            // input::get_pressed_keys_plugin,
-                            // tests::tests_plugin
+      input::MyInputPlugin,
     ))
     // .insert_resource(AmbientLight{ color: Color::ALICE_BLUE, brightness: 0.2 })
     // .insert_resource(bevy_xpbd_3d::resources::SubstepCount(2))
@@ -95,6 +79,7 @@ pub fn main() {
         update::player_follower,
         update::spinning_animation,
         update::sun_movement,
+        update::show_message,
         bevy::window::close_on_esc,
         jumpy_penguin::segment_path_motion,
       ),

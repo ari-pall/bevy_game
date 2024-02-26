@@ -1,3 +1,5 @@
+use bevy::core_pipeline::bloom::{BloomCompositeMode, BloomPrefilterSettings};
+
 use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_COLOR_3},
              components::{name, FaceCamera, IsPlayerSprite, ItemPickUp, Player,
                           SpinningAnimation, Sun, SunSprite},
@@ -31,11 +33,19 @@ pub fn billboard(transform: Transform,
                             lock_axis: BillboardLockAxis { y_axis: true,
                                                            rotation: true } }
 }
-
 pub fn spawn_with_child(c: &mut Commands, a: impl Bundle, b: impl Bundle) {
   c.spawn(a).with_children(|x| {
               x.spawn(b);
             });
+}
+pub fn spawn_with_2_children(commands: &mut Commands,
+                             a: impl Bundle,
+                             b: impl Bundle,
+                             c: impl Bundle) {
+  commands.spawn(a).with_children(|x| {
+                     x.spawn(b);
+                     x.spawn(c);
+                   });
 }
 pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   macro_rules! spawn {
@@ -62,23 +72,20 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                       shadows_enabled: true,
                                                       ..default() },
                             ..default() });
+  let col_text = |color: Color, text: &str| TextSection { value: text.to_string(),
+                                                          style:
+                                                            TextStyle { font_size: 30.0,
+                                                                        color,
+                                                                        ..default() } };
   spawn!(BillboardTextBundle {
-    transform: Transform::from_translation(vec3(23.128942, 3.8398309, 3.602163))
+    transform: Transform::from_xyz(23.128942, 3.8398309, 3.602163)
       .with_scale(Vec3::splat(0.0085)),
     text: Text::from_sections([
-      TextSection {
-        value: "IMPORTANT".to_string(),
-        style: text_style.clone()
-      },
-      TextSection {
-        value: " text".to_string(),
-        style: text_style.clone()
-      }
+      col_text(Color::RED,"IMPORTANT "),
+      col_text(Color::BLUE,"text")
     ]).with_justify(JustifyText::Center),
     ..default()
   });
-  // Vec3(23.128942, 3.8398309, 3.602163)
-
   let iceberg = |mut spm: SegmentPathMotion| {
     (RigidBody::KinematicVelocityBased,
      Velocity::default(),
@@ -107,9 +114,10 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   spawn!(up_down_iceberg(vec3(5.343936, -3.0, -2.4758048), 4.0, 0.5));
   spawn!(up_down_iceberg(vec3(9.069067, -4.0, -5.0675673), 4.0, 0.4));
   spawn!(up_down_iceberg(vec3(12.84221, -6.0, -4.947112), 4.0, 0.3));
-  spawn!(billboard(Transform::from_xyz(-30.0, 0.0, -40.0).with_scale(Vec3::splat(7.0)),
-                   amah.iceberg.clone(),
-                   &amah));
+  spawn!((FaceCamera,
+          billboard(Transform::from_xyz(-30.0, 0.0, -40.0).with_scale(Vec3::splat(7.0)),
+                    amah.iceberg.clone(),
+                    &amah)));
   // GibSpriteBundle(Sprite3d { image: amah.iceberg.clone(),
   //          transform: Transform::from_xyz(-30.0, 0.0, -40.0),
   //          pixels_per_metre: 1.5,
@@ -172,19 +180,19 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                         transform: Transform::from_xyz(40.0, -30.0, 60.0),
                         ..default() }));
   spawn!((Sun::default(),
-          DirectionalLightBundle { directional_light:
-                                     DirectionalLight { color: Color::WHITE,
-                                                        illuminance: 12000.0,
-                                                        shadows_enabled: true,
-                                                        ..default()
-                                                        // shadow_depth_bias: todo!(),
-                                                        // shadow_normal_bias: todo!()
-                                   },
-                                   ..default() }));
-  spawn!((SunSprite,
           billboard(Transform::from_scale(Vec3::splat(20.0)),
                     amah.sun.clone(),
-                    &amah)));
+                    &amah)),
+         DirectionalLightBundle { directional_light:
+                                    DirectionalLight { color: Color::WHITE,
+                                                     illuminance: 11000.0,
+                                                     shadows_enabled: true,
+                                                     ..default()
+                                                     // shadow_depth_bias: todo!(),
+                                                     // shadow_normal_bias: todo!()
+                                  },
+                                  // transform: Transform::looking_to
+                                  ..default() });
   // ScreenSpaceAmbientOcclusionPlugin
   // Camera
   spawn!((Camera3dBundle { camera: Camera { hdr: true,
@@ -197,7 +205,12 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           //               falloff: FogFalloff::ExponentialSquared { density: 0.01 },
           //               ..default() },
           // UiCameraConfig { show_ui: true },
-          BloomSettings { intensity: 0.22,
+          BloomSettings { intensity: 0.5,
+                          low_frequency_boost: 0.0,
+                          prefilter_settings: BloomPrefilterSettings { threshold:
+                                                                         2.2,
+                                                                       ..default() },
+                          composite_mode: BloomCompositeMode::Additive,
                           ..default() },
           // Skybox(amah.skybox.clone()),
           ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
@@ -230,15 +243,12 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
       (RigidBody::Fixed,
        Friction::default(),
        Velocity::default(),
-       // ActiveCollisionTypes::DYNAMIC_STATIC,
-       // Collider::cuboid(0.5, 0.5, 0.5),
        AsyncCollider(ComputedColliderShape::ConvexHull),
-       MaterialMeshBundle { mesh: amah.unitcube.clone(),
-                            material,
-                            transform,
-                            ..default() })
+       PbrBundle { mesh: amah.unitcube.clone(),
+                   material,
+                   transform,
+                   ..default() })
     };
-    // Collider::from_bevy_mesh
     match tile {
       'w' => spawn!(block(amah.funky_material.clone())),
       'g' => spawn!(block(amah.grass_material.clone())),

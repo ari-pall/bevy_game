@@ -1,7 +1,7 @@
 pub use bevy::prelude::Name;
 use {bevy::{ecs::system::{SystemParam, SystemState},
-            prelude::{ButtonInput, Color, Component, Entity, KeyCode, Query, Res,
-                      Transform, Vec3, World},
+            prelude::*,
+            text::{Text, TextStyle},
             utils::{HashMap, HashSet}},
      rust_utils::{comment, inc, MutateTrait}};
 #[derive(Component, Clone)]
@@ -52,6 +52,23 @@ pub struct Player {
   // pub jump_charge_level: u16
   pub jump_charge_level: u32_bounded<PLAYER_JUMP_CHARGE_LEVEL_MAX>
 }
+
+#[derive(Component, Clone)]
+pub struct Message {
+  pub age_ticks: u32,
+  pub origin_pos: Vec3
+}
+pub fn message(text: &str, origin_pos: Vec3) -> impl Bundle {
+  (Message{ age_ticks: 0, origin_pos },
+   BillboardTextBundle {
+     transform: Transform::from_translation(origin_pos)
+       .with_scale(Vec3::splat(0.0085)),
+     text: Text::from_section(text, TextStyle { font_size: 27.0,
+                                                color: Color::WHITE,
+                                                ..default() }).with_justify(JustifyText::Center),
+     ..default()
+   })
+}
 #[derive(Component, Clone, Copy)]
 pub enum ItemPickUp {
   SpeedBoost,
@@ -68,7 +85,7 @@ pub struct Combat {
   pub damage: u32
 }
 
-use rand::thread_rng;
+use {bevy_mod_billboard::BillboardTextBundle, rand::thread_rng};
 #[derive(Component, Default)]
 pub struct Container(pub HashSet<Entity>);
 impl Container {

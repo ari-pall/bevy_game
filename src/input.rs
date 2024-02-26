@@ -14,13 +14,12 @@ pub struct JumpStart;
 #[derive(Event)]
 pub struct JumpEnd;
 // does things based on keyboard input
-fn keyboard_input(// mut movement_event_writer: EventWriter<MoveHorizontallyAction>,
-                  keyboard_input: Res<ButtonInput<KeyCode>>,
+fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>,
                   mouse_button_input: Res<ButtonInput<MouseButton>>,
                   mut cam_q: Query<&mut ThirdPersonCamera>,
                   mut playerq: Query<&Transform, With<Player>>) {
   if keyboard_input.just_pressed(KeyCode::KeyL) {
-    playerq.for_each(debug_println);
+    playerq.iter().for_each(debug_println);
   }
   if let Ok(mut cam) = cam_q.get_single_mut() {
     if mouse_button_input.just_pressed(MouseButton::Left) {
