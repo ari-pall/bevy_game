@@ -1,8 +1,8 @@
 use {crate::{assetstuff::AllMyAssetHandles,
              components::{message, FaceCamera, IsPlayerSprite, ItemPickUp, Message,
                           Player, PlayerFollower, SpinningAnimation, Sun},
-             setup::{billboard, spawn_with_2_children}},
-     bevy::{input::mouse::MouseMotion, prelude::*},
+             setup::{billboard, flashlight, spawn_child_with_child, spawn_with_2_children}},
+     bevy::prelude::*,
      bevy_rapier3d::prelude::*,
      rust_utils::vec,
      std::f32::consts::{PI, TAU}};
@@ -191,7 +191,9 @@ pub fn player_follower(mut followerq: Query<(&mut ExternalForce, &Transform),
 const PICKUPDISTANCE: f32 = 0.7;
 const SPEEDBOOSTAMOUNT: f32 = 8.0;
 pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
+                    playerspriteq: Query<Entity, With<IsPlayerSprite>>,
                     itemsq: Query<(Entity, &Transform, &ItemPickUp)>,
+                    amah: Res<AllMyAssetHandles>,
                     mut c: Commands) {
   if let Ok((&player_transform, mut player)) = playerq.get_single_mut() {
     for (item, &item_transform, &item_pick_up) in &itemsq {
@@ -205,6 +207,13 @@ pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
             player.speed_boost += SPEEDBOOSTAMOUNT;
           }
           ItemPickUp::GetFlashLight => {
+            if let Ok(player_sprite) = playerspriteq.get_single() {
+              let (b1, b2) =
+                flashlight(Transform::from_xyz(0.49, 0.25, 0.0).with_scale(Vec3::splat(0.06))
+                                                             .looking_to(Vec3::Z, Vec3::Y),
+                           &amah);
+              spawn_child_with_child(&mut c, player_sprite, b1, b2);
+            }
             c.spawn(message("you found a flashlight", player_transform.translation));
           }
           ItemPickUp::HealthBoost(_) => todo!()

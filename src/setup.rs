@@ -15,9 +15,13 @@ use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_C
                           BillboardTextureBundle, BillboardTextureHandle},
      bevy_rapier3d::prelude::*,
      bevy_third_person_camera::{ThirdPersonCamera, ThirdPersonCameraTarget},
-     bevy_vox_scene::{VoxelScene, VoxelSceneBundle},
+     bevy_vox_scene::VoxelSceneBundle,
      rust_utils::comment,
      std::f32::consts::PI};
+// enum BundleTree{
+//   EntityWithChildren(Entity,Vec<B>)
+
+// }
 
 pub fn billboard(transform: Transform,
                  image_handle: Handle<Image>,
@@ -36,18 +40,38 @@ pub fn billboard(transform: Transform,
                             lock_axis: BillboardLockAxis { y_axis: true,
                                                            rotation: true } }
 }
-pub fn spawn_with_child(c: &mut Commands, a: impl Bundle, b: impl Bundle) {
-  c.spawn(a).with_children(|x| {
-              x.spawn(b);
-            });
+pub fn flashlight(transform: Transform,
+                  amah: &Res<AllMyAssetHandles>)
+                  -> (impl Bundle, impl Bundle) {
+  ((VoxelSceneBundle { scene: amah.flashlight.clone(),
+                       transform,
+                       ..default() },
+    NotShadowCaster,
+    NotShadowReceiver),
+   SpotLightBundle { spot_light: SpotLight { shadows_enabled: true,
+                                             intensity: 2_000_000.0,
+                                             range: 40.0,
+                                             outer_angle: PI * 0.2,
+                                             ..default() },
+                     transform: Transform::from_translation(Vec3::NEG_Z * 3.0),
+                     ..default() })
 }
-pub fn spawn_with_2_children(commands: &mut Commands,
-                             a: impl Bundle,
-                             b: impl Bundle,
-                             c: impl Bundle) {
+pub fn spawn_child(c: &mut Commands, e: Entity, b: impl Bundle) {
+  let child = c.spawn(b).id();
+  c.entity(e).add_child(child);
+}
+pub fn spawn_child_with_child(c: &mut Commands,
+                              e: Entity,
+                              b1: impl Bundle,
+                              b2: impl Bundle) {
+  let b1e = c.spawn(b1).id();
+  let b2e = c.spawn(b2).id();
+  c.entity(b1e).add_child(b2e);
+  c.entity(e).add_child(b1e);
+}
+pub fn spawn_with_child(commands: &mut Commands, a: impl Bundle, b: impl Bundle) {
   commands.spawn(a).with_children(|x| {
                      x.spawn(b);
-                     x.spawn(c);
                    });
 }
 pub fn spawn_with_child_with_child(commands: &mut Commands,
@@ -58,6 +82,28 @@ pub fn spawn_with_child_with_child(commands: &mut Commands,
                      aa.spawn(b).with_children(|bb| {
                                   bb.spawn(c);
                                 });
+                   });
+}
+pub fn spawn_with_child_with_child_with_child(commands: &mut Commands,
+                                              a: impl Bundle,
+                                              b: impl Bundle,
+                                              c: impl Bundle,
+                                              d: impl Bundle) {
+  commands.spawn(a).with_children(|aa| {
+                     aa.spawn(b).with_children(|bb| {
+                                  bb.spawn(c).with_children(|cc| {
+                                               cc.spawn(d);
+                                             });
+                                });
+                   });
+}
+pub fn spawn_with_2_children(commands: &mut Commands,
+                             a: impl Bundle,
+                             b: impl Bundle,
+                             c: impl Bundle) {
+  commands.spawn(a).with_children(|x| {
+                     x.spawn(b);
+                     x.spawn(c);
                    });
 }
 pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
@@ -347,32 +393,37 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                      SpinningAnimation { rotation_steps: default(),
                                          up_down_steps: default(),
                                          up_down_distance: 0.3 })),
-      'F' => spawn_with_child_with_child(
-        &mut c,
-        (ItemPickUp::GetFlashLight,
-         SceneBundle { transform,
-                       ..default() }),
-        (VoxelSceneBundle {
-          scene: amah.flashlight.clone(),
-          transform:
-          Transform::from_scale(Vec3::splat(0.08)),
-          ..default() },
-         NotShadowCaster,
-         NotShadowReceiver,
-         SpinningAnimation {
-           rotation_steps: default(),
-           up_down_steps: default(),
-           up_down_distance: 0.3 }),
-        // PointLightBundle::default(),
-        SpotLightBundle {
-          spot_light: SpotLight{ shadows_enabled:true,
-                                 range:40.0,
-                                 outer_angle: PI * 0.2,
-                                 ..default() },
-          transform: Transform::from_translation(Vec3::NEG_Z * 3.0),
-          ..default()
-        }
-      ),
+      'F' => {
+        let (b1, b2) = flashlight(Transform::from_scale(Vec3::splat(0.08)), &amah);
+        spawn_with_child_with_child_with_child(
+          &mut c,
+          (ItemPickUp::GetFlashLight,
+           SceneBundle { transform,
+                         ..default() }),
+          (SceneBundle::default(),
+           SpinningAnimation {
+             rotation_steps: default(),
+             up_down_steps: default(),
+             up_down_distance: 0.2 }),
+          b1,b2
+          // (VoxelSceneBundle {
+          //   scene: amah.flashlight.clone(),
+          //   transform:
+          //   Transform::from_scale(Vec3::splat(0.08)),
+          //   ..default() },
+          //  NotShadowCaster,
+          //  NotShadowReceiver,
+          // ),
+          // SpotLightBundle {
+          //   spot_light: SpotLight{ shadows_enabled:true,
+          //                          range:40.0,
+          //                          outer_angle: PI * 0.2,
+          //                          ..default() },
+          //   transform: Transform::from_translation(Vec3::NEG_Z * 3.0),
+          //   ..default()
+          // }
+        );
+      }
       'L' => spawn!((RigidBody::Dynamic,
                      ColliderMassProperties::Density(1.0),
                      // MassPropertiesBundle::default(),
