@@ -77,8 +77,6 @@ iter-comprehensions = "*"
 # bevy-tnua = "*"
 # bevy_vox = "0.8.1"
 # bevy_obj = { version = "0.12", features = ["scene"] }
-# bevy_mod_billboard = "0.5.1"
-#
 bevy_mod_billboard = { git = "https://github.com/kulkalkul/bevy_mod_billboard", rev = "1fabd2214731dedb4b17ce0a0894d22182707759" }
 
-bevy_vox_scene = "0.13.0"
+bevy_vox_scene ={git = "https://github.com/Utsira/bevy_vox_scene", rev = "01606eb983ea8e7d039323fd3900f9d796993b8e"}

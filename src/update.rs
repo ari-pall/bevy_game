@@ -204,6 +204,9 @@ pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
           ItemPickUp::SpeedBoost => {
             player.speed_boost += SPEEDBOOSTAMOUNT;
           }
+          ItemPickUp::GetFlashLight => {
+            c.spawn(message("you found a flashlight", player_transform.translation));
+          }
           ItemPickUp::HealthBoost(_) => todo!()
         }
       }
@@ -232,7 +235,7 @@ pub fn show_message(mut q: Query<(Entity, &mut Transform, &mut Message)>, mut c:
     } else {
       let scale =
         (((m.age_ticks as f32) / (MESSAGE_SHOW_TIME_TICKS as f32)) * PI).sin()
-                                                                        .powf(0.17);
+                                                                        .powf(0.11);
       t.translation = m.origin_pos + (Vec3::Y * MESSAGE_RAISE_ALT * scale);
       t.scale = Vec3::splat(0.0085 * scale);
 

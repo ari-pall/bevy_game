@@ -1,4 +1,9 @@
-use bevy::window::{CursorGrabMode, PrimaryWindow};
+use std::fmt::Debug;
+
+use {bevy::window::{CursorGrabMode, PrimaryWindow},
+     bevy_vox_scene::VoxelSceneBundle};
+
+use crate::{assetstuff::AllMyAssetHandles, components::message};
 
 use {crate::components::Player,
      bevy::prelude::{ButtonInput, KeyCode, Res, *},
@@ -16,10 +21,13 @@ pub struct JumpStart;
 #[derive(Event)]
 pub struct JumpEnd;
 // does things based on keyboard input
+pub fn debugfmt(t: impl Debug) -> String { format!("{:?}", t) }
 fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>,
                   mouse_button_input: Res<ButtonInput<MouseButton>>,
                   mut window_q: Query<&mut Window, With<PrimaryWindow>>,
                   mut cam_q: Query<&mut ThirdPersonCamera>,
+                  amah: Res<AllMyAssetHandles>,
+                  mut c: Commands,
                   mut playerq: Query<&Transform, With<Player>>) {
   if keyboard_input.just_pressed(KeyCode::KeyR) {
     if let Ok(mut window) = window_q.get_single_mut() {
@@ -27,7 +35,21 @@ fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>,
     }
   }
   if keyboard_input.just_pressed(KeyCode::KeyL) {
-    playerq.iter().for_each(debug_println);
+    if let Ok(&player_transform) = playerq.get_single() {
+      // c.spawn(VoxelSceneBundle { scene: amah.flashlight.clone(),
+      //                              transform:
+      //                                player_transform,
+      //                              visibility: Visibility::Visible
+      //                               },
+      //           // SpinningAnimation { rotation_steps: default(),
+      //           //                     up_down_steps: default(),
+      //           //                     up_down_distance: 0.3 }
+      //          );
+      if let Ok(mut window) = window_q.get_single_mut() {
+        c.spawn(message(debugfmt(window.cursor.grab_mode),
+                        player_transform.translation));
+      }
+    }
   }
   if let Ok(mut cam) = cam_q.get_single_mut() {
     if mouse_button_input.just_pressed(MouseButton::Left) {

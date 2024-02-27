@@ -50,7 +50,6 @@ pub fn main() {
         .set(ImagePlugin::default_nearest())
         .set(WindowPlugin {
           primary_window: Some(Window {
-            // cursor: Cursor
             present_mode: window::PresentMode::AutoNoVsync,
             title: "bevy_game".to_string(),
             canvas: Some("#bevy".to_string()),
@@ -60,12 +59,14 @@ pub fn main() {
         }),
       // bevy_obj::ObjPlugin,
       // bevy_vox::VoxPlugin::default(),
+      bevy_vox_scene::VoxScenePlugin,
       assetstuff::AssetStuffPlugin,
       ThirdPersonCameraPlugin,
       bevy_mod_billboard::prelude::BillboardPlugin,
       bevy_rapier3d::prelude::RapierPhysicsPlugin::<NoUserData>::default(),
       input::MyInputPlugin,
     ))
+// .init_asset::<bevy_vox_scene::scene::VoxelScene>()
     // .insert_resource(AmbientLight{ color: Color::ALICE_BLUE, brightness: 0.2 })
     // .insert_resource(bevy_xpbd_3d::resources::SubstepCount(2))
     .add_systems(Startup, setup::setup)

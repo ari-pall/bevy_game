@@ -59,7 +59,7 @@ pub struct Message {
   pub age_ticks: u32,
   pub origin_pos: Vec3
 }
-pub fn message(text: &str, origin_pos: Vec3) -> impl Bundle {
+pub fn message(text: impl Into<String>, origin_pos: Vec3) -> impl Bundle {
   (Message{ age_ticks: 0, origin_pos },
    BillboardTextBundle {
      transform: Transform::from_scale(Vec3::splat(0.0)),
@@ -72,6 +72,7 @@ pub fn message(text: &str, origin_pos: Vec3) -> impl Bundle {
 #[derive(Component, Clone, Copy)]
 pub enum ItemPickUp {
   SpeedBoost,
+  GetFlashLight,
   HealthBoost(u32)
 }
 #[derive(Component, Clone)]

@@ -7,7 +7,7 @@ use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_C
                             bloom::{BloomCompositeMode, BloomPrefilterSettings,
                                     BloomSettings}},
             math::vec3,
-            pbr::NotShadowCaster,
+            pbr::{NotShadowCaster, NotShadowReceiver},
             prelude::*,
             render::camera::Exposure},
      bevy_mod_billboard::{BillboardDepth, BillboardLockAxis, BillboardLockAxisBundle,
@@ -15,7 +15,9 @@ use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_C
                           BillboardTextureBundle, BillboardTextureHandle},
      bevy_rapier3d::prelude::*,
      bevy_third_person_camera::{ThirdPersonCamera, ThirdPersonCameraTarget},
-     rust_utils::comment};
+     bevy_vox_scene::{VoxelScene, VoxelSceneBundle},
+     rust_utils::comment,
+     std::f32::consts::PI};
 
 pub fn billboard(transform: Transform,
                  image_handle: Handle<Image>,
@@ -48,6 +50,16 @@ pub fn spawn_with_2_children(commands: &mut Commands,
                      x.spawn(c);
                    });
 }
+pub fn spawn_with_child_with_child(commands: &mut Commands,
+                                   a: impl Bundle,
+                                   b: impl Bundle,
+                                   c: impl Bundle) {
+  commands.spawn(a).with_children(|aa| {
+                     aa.spawn(b).with_children(|bb| {
+                                  bb.spawn(c);
+                                });
+                   });
+}
 pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   macro_rules! spawn {
     ($bundle:expr) => {{
@@ -56,6 +68,12 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
     ($bundle1:expr,$bundle2:expr) => {{
       c.spawn($bundle1).with_children(|x| {
                          x.spawn($bundle2);
+                       });
+    }};
+    ($bundle1:expr,$bundle2:expr,$bundle3:expr) => {{
+      c.spawn($bundle1).with_children(|x| {
+                         x.spawn($bundle2);
+                         x.spawn($bundle3);
                        });
     }};
   }
@@ -155,7 +173,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                         ..default() }));
   let glowy_sphere = |transform| {
     (PointLightBundle { transform,
-                        point_light: PointLight { intensity: 400.0,
+                        point_light: PointLight { intensity: 4_00_000.0,
                                                   radius: 1.0,
                                                   // range: 100.0,
                                                   shadows_enabled: true,
@@ -252,6 +270,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                    transform,
                    ..default() })
     };
+    // SpotLightBundle
     match tile {
       'w' => spawn!(block(amah.funky_material.clone())),
       'g' => spawn!(block(amah.grass_material.clone())),
@@ -278,7 +297,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                             material: amah.glowy_material_2.clone(),
                             transform: transform.with_scale(Vec3::ONE * 0.4),
                             ..default() }),
-               PointLightBundle { point_light: PointLight { intensity: 300.0,
+               PointLightBundle { point_light: PointLight { intensity: 2_00_000.0,
                                                             radius: 0.4,
                                                             shadows_enabled: true,
                                                             color: GLOWY_COLOR_2,
@@ -319,18 +338,41 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                      capsule_from_height_and_radius(0.8, 0.2),
                      FaceCamera,
                      billboard(transform, amah.tree.clone(), &amah))),
-      'C' => {
-        spawn!((ItemPickUp::SpeedBoost,
-                SceneBundle { transform,
-                              ..default() }),
-               (SceneBundle { scene: amah.coffee_scene.clone(),
-                              transform: Transform::default().with_scale(Vec3::ONE
-                                                                         * 0.1),
-                              ..default() },
-                SpinningAnimation { rotation_steps: default(),
-                                    up_down_steps: default(),
-                                    up_down_distance: 0.3 }))
-      }
+      'C' => spawn!((ItemPickUp::SpeedBoost,
+                     SceneBundle { transform,
+                                   ..default() }),
+                    (SceneBundle { scene: amah.coffee_scene.clone(),
+                                   transform: Transform::from_scale(Vec3::splat(0.1)),
+                                   ..default() },
+                     SpinningAnimation { rotation_steps: default(),
+                                         up_down_steps: default(),
+                                         up_down_distance: 0.3 })),
+      'F' => spawn_with_child_with_child(
+        &mut c,
+        (ItemPickUp::GetFlashLight,
+         SceneBundle { transform,
+                       ..default() }),
+        (VoxelSceneBundle {
+          scene: amah.flashlight.clone(),
+          transform:
+          Transform::from_scale(Vec3::splat(0.08)),
+          ..default() },
+         NotShadowCaster,
+         NotShadowReceiver,
+         SpinningAnimation {
+           rotation_steps: default(),
+           up_down_steps: default(),
+           up_down_distance: 0.3 }),
+        // PointLightBundle::default(),
+        SpotLightBundle {
+          spot_light: SpotLight{ shadows_enabled:true,
+                                 range:40.0,
+                                 outer_angle: PI * 0.2,
+                                 ..default() },
+          transform: Transform::from_translation(Vec3::NEG_Z * 3.0),
+          ..default()
+        }
+      ),
       'L' => spawn!((RigidBody::Dynamic,
                      ColliderMassProperties::Density(1.0),
                      // MassPropertiesBundle::default(),
@@ -364,6 +406,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
         spawn!((RigidBody::Dynamic,
                 ColliderMassProperties::Density(1.0),
                 NotShadowCaster,
+                NotShadowReceiver,
                 // MassPropertiesBundle::default(),
                 AsyncCollider(ComputedColliderShape::ConvexHull),
                 name("uranium cube"),
@@ -375,7 +418,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                             material: amah.glowy_material_3.clone(),
                             transform,
                             ..default() }),
-               PointLightBundle { point_light: PointLight { intensity: 300.0,
+               PointLightBundle { point_light: PointLight { intensity: 2_00_000.0,
                                                             radius: 0.4,
                                                             shadows_enabled: true,
                                                             color: GLOWY_COLOR_3,

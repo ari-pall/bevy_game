@@ -4,6 +4,7 @@ use {bevy::{asset::embedded_asset,
             prelude::*,
             render::{render_asset::RenderAssetUsages,
                      render_resource::{Extent3d, TextureDimension, TextureFormat}}},
+     bevy_vox_scene::VoxelScene,
      rust_utils::{comment, map},
      std::cell::OnceCell};
 /// Creates a colorful test pattern
@@ -86,6 +87,7 @@ pub struct AllMyAssetHandles {
   pub sun: Handle<Image>,
   pub coffee: Handle<Image>,
   pub coffee_scene: Handle<Scene>,
+  pub flashlight: Handle<VoxelScene>,
   pub snow_image: Handle<Image>,
   pub snow_material: Handle<StandardMaterial>,
   pub grass: Handle<Image>,
@@ -129,7 +131,9 @@ impl Plugin for AssetStuffPlugin {
       coffee_scene, "coffee.glb", "Scene0"
       goxel_level, "goxel_level.glb", "Scene0"
       turtle_level, "turtle level.gltf", "Scene0"
+      flashlight, "flashlight.vox", "flashlight"
     }
+    // VoxelScene
     asset_paths! {
       stone, "stone.png"
       skybox, "skybox.png"
@@ -137,6 +141,7 @@ impl Plugin for AssetStuffPlugin {
       iceberg, "iceberg.png"
       coffee, "coffee.png"
       stickman, "stickman.png"
+      // flashlight, "flashlight.vox"
       // alevel, "alevel.gltf"
       // alevel, "alevel.obj"
       grass, "grass.png"
