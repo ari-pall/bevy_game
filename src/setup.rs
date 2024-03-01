@@ -55,10 +55,6 @@ pub fn flashlight(transform: Transform, amah: &Res<AllMyAssetHandles>) -> impl B
                                                                                  * 3.0),
                                                    ..default() })
 }
-pub fn spawn_child(c: &mut Commands, e: Entity, b: impl Bundle) {
-  let child = c.spawn(b).id();
-  c.entity(e).add_child(child);
-}
 pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   macro_rules! spawn {
     ($bundle:expr) => {{
@@ -66,18 +62,11 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
     }};
     ($bundle1:expr,$bundle2:expr) => {{
       $bundle1.with_child($bundle2).spawn(&mut c);
-      // c.spawn($bundle1).with_children(|x| {
-      //                    x.spawn($bundle2);
-      //                  });
     }};
     ($bundle1:expr,$bundle2:expr,$bundle3:expr) => {{
       $bundle1.with_child($bundle2)
               .with_child($bundle3)
               .spawn(&mut c);
-      // c.spawn($bundle1).with_children(|x| {
-      //                    x.spawn($bundle2);
-      //                    x.spawn($bundle3);
-      //                  });
     }};
   }
   let text_style = TextStyle { font_size: 30.0,
@@ -352,16 +341,16 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                          up_down_distance: 0.3 })),
       'F' => {
         (ItemPickUp::GetFlashLight,
-          SceneBundle { transform,
-                        ..default() })
+         SceneBundle { transform,
+                       ..default() })
           .with_child((SceneBundle::default(),
                        SpinningAnimation { rotation_steps: default(),
                                            up_down_steps: default(),
                                            up_down_distance: 0.2 })
-                    .with_child(flashlight(Transform::from_scale(Vec3::splat(0.08)),
-                                          &amah)))
+                      .with_child(flashlight(Transform::from_scale(Vec3::splat(0.08)),
+                                             &amah)))
 
-              .spawn(&mut c);
+          .spawn(&mut c);
       }
       'H' => {
         SceneBundle { transform,
