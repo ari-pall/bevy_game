@@ -1,7 +1,8 @@
 use {crate::{assetstuff::AllMyAssetHandles,
+             bundletree::BundleTree,
              components::{message, FaceCamera, IsPlayerSprite, ItemPickUp, Message,
                           Player, PlayerFollower, SpinningAnimation, Sun},
-             setup::{billboard, flashlight, spawn_child_with_child, spawn_with_2_children}},
+             setup::{billboard, flashlight}},
      bevy::prelude::*,
      bevy_rapier3d::prelude::*,
      rust_utils::vec,
@@ -158,23 +159,23 @@ pub fn spawn_mushroom_man(playerq: Query<&Transform, With<Player>>,
   if let Ok(&player_transform) = playerq.get_single() {
     if keyboard_input.just_pressed(KeyCode::KeyZ) {
       let height = 1.3;
-      spawn_with_2_children(&mut c,
-                            (PlayerFollower,
-                             Friction::new(2.9),
-                             RigidBody::Dynamic,
-                             Velocity::default(),
-                             ExternalForce::default(),
-                             ExternalImpulse::default(),
-                             LockedAxes::ROTATION_LOCKED,
-                             capsule_from_height_and_radius(height, 0.3),
-                             // Collider::capsule_y(0.4, 0.2),
-                             ColliderMassProperties::Mass(0.1),
-                             SpatialBundle::from_transform(player_transform)),
-                            (FaceCamera,
-                             billboard(Transform::from_scale(Vec3::splat(height * 1.15)),
-                                       amah.mushroom_man.clone(),
-                                       &amah)),
-                            message("spawned a mushroom man", default()));
+      (PlayerFollower,
+       Friction::new(2.9),
+       RigidBody::Dynamic,
+       Velocity::default(),
+       ExternalForce::default(),
+       ExternalImpulse::default(),
+       LockedAxes::ROTATION_LOCKED,
+       capsule_from_height_and_radius(height, 0.3),
+       // Collider::capsule_y(0.4, 0.2),
+       ColliderMassProperties::Mass(0.1),
+       SpatialBundle::from_transform(player_transform))
+        .with_child((FaceCamera,
+                     billboard(Transform::from_scale(Vec3::splat(height * 1.15)),
+                               amah.mushroom_man.clone(),
+                               &amah)))
+        .with_child(message("spawned a mushroom man", default()))
+        .spawn(&mut c);
     }
   }
 }
@@ -208,13 +209,11 @@ pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
           }
           ItemPickUp::GetFlashLight => {
             if let Ok(player_sprite) = playerspriteq.get_single() {
-              let (b1, b2) =
-                flashlight(Transform::from_xyz(0.49, 0.25, 0.0).with_scale(Vec3::splat(0.06))
+              flashlight(Transform::from_xyz(0.49, 0.25, 0.0).with_scale(Vec3::splat(0.06))
                                                              .looking_to(Vec3::Z, Vec3::Y),
-                           &amah);
-              spawn_child_with_child(&mut c, player_sprite, b1, b2);
+                         &amah).spawn_as_child(player_sprite, &mut c);
+              c.spawn(message("you found a flashlight", player_transform.translation));
             }
-            c.spawn(message("you found a flashlight", player_transform.translation));
           }
           ItemPickUp::HealthBoost(_) => todo!()
         }

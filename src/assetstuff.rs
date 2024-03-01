@@ -5,8 +5,7 @@ use {bevy::{asset::embedded_asset,
             render::{render_asset::RenderAssetUsages,
                      render_resource::{Extent3d, TextureDimension, TextureFormat}}},
      bevy_vox_scene::VoxelScene,
-     rust_utils::{comment, map},
-     std::cell::OnceCell};
+     rust_utils::{comment, map}};
 /// Creates a colorful test pattern
 fn uv_debug_texture() -> Image {
   // DynamicSceneBuilder
@@ -88,6 +87,8 @@ pub struct AllMyAssetHandles {
   pub coffee: Handle<Image>,
   pub coffee_scene: Handle<Scene>,
   pub flashlight: Handle<VoxelScene>,
+  pub glowtest: Handle<VoxelScene>,
+  pub flower: Handle<VoxelScene>,
   pub snow_image: Handle<Image>,
   pub snow_material: Handle<StandardMaterial>,
   pub grass: Handle<Image>,
@@ -141,6 +142,9 @@ impl Plugin for AssetStuffPlugin {
       iceberg, "iceberg.png"
       coffee, "coffee.png"
       stickman, "stickman.png"
+      flower, "flower.vox"
+      glowtest, "glowtest.vox"
+
       // flashlight, "flashlight.vox"
       // alevel, "alevel.gltf"
       // alevel, "alevel.obj"

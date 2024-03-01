@@ -1,4 +1,5 @@
 use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_COLOR_3},
+             bundletree::BundleTree,
              components::{name, FaceCamera, IsPlayerSprite, ItemPickUp, Player,
                           SpinningAnimation, Sun},
              jumpy_penguin::SegmentPathMotion,
@@ -14,14 +15,10 @@ use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_C
                           BillboardMeshHandle, BillboardTextBundle,
                           BillboardTextureBundle, BillboardTextureHandle},
      bevy_rapier3d::prelude::*,
-     bevy_third_person_camera::{ThirdPersonCamera, ThirdPersonCameraTarget},
+     bevy_third_person_camera::{Offset, ThirdPersonCamera, ThirdPersonCameraTarget},
      bevy_vox_scene::VoxelSceneBundle,
      rust_utils::comment,
      std::f32::consts::PI};
-// enum BundleTree{
-//   EntityWithChildren(Entity,Vec<B>)
-
-// }
 
 pub fn billboard(transform: Transform,
                  image_handle: Handle<Image>,
@@ -40,71 +37,27 @@ pub fn billboard(transform: Transform,
                             lock_axis: BillboardLockAxis { y_axis: true,
                                                            rotation: true } }
 }
-pub fn flashlight(transform: Transform,
-                  amah: &Res<AllMyAssetHandles>)
-                  -> (impl Bundle, impl Bundle) {
-  ((VoxelSceneBundle { scene: amah.flashlight.clone(),
-                       transform,
-                       ..default() },
-    NotShadowCaster,
-    NotShadowReceiver),
-   SpotLightBundle { spot_light: SpotLight { shadows_enabled: true,
-                                             intensity: 2_000_000.0,
-                                             range: 40.0,
-                                             outer_angle: PI * 0.2,
-                                             ..default() },
-                     transform: Transform::from_translation(Vec3::NEG_Z * 3.0),
-                     ..default() })
+
+pub fn flashlight(transform: Transform, amah: &Res<AllMyAssetHandles>) -> impl BundleTree {
+  (VoxelSceneBundle { scene: amah.flashlight.clone(),
+                      transform,
+                      ..default() },
+   NotShadowCaster,
+   NotShadowReceiver)
+                     .with_child(SpotLightBundle { spot_light:
+                                                     SpotLight { shadows_enabled: true,
+                                                                 intensity: 2_000_000.0,
+                                                                 range: 40.0,
+                                                                 outer_angle: PI * 0.2,
+                                                                 ..default() },
+                                                   transform:
+                                                     Transform::from_translation(Vec3::NEG_Z
+                                                                                 * 3.0),
+                                                   ..default() })
 }
 pub fn spawn_child(c: &mut Commands, e: Entity, b: impl Bundle) {
   let child = c.spawn(b).id();
   c.entity(e).add_child(child);
-}
-pub fn spawn_child_with_child(c: &mut Commands,
-                              e: Entity,
-                              b1: impl Bundle,
-                              b2: impl Bundle) {
-  let b1e = c.spawn(b1).id();
-  let b2e = c.spawn(b2).id();
-  c.entity(b1e).add_child(b2e);
-  c.entity(e).add_child(b1e);
-}
-pub fn spawn_with_child(commands: &mut Commands, a: impl Bundle, b: impl Bundle) {
-  commands.spawn(a).with_children(|x| {
-                     x.spawn(b);
-                   });
-}
-pub fn spawn_with_child_with_child(commands: &mut Commands,
-                                   a: impl Bundle,
-                                   b: impl Bundle,
-                                   c: impl Bundle) {
-  commands.spawn(a).with_children(|aa| {
-                     aa.spawn(b).with_children(|bb| {
-                                  bb.spawn(c);
-                                });
-                   });
-}
-pub fn spawn_with_child_with_child_with_child(commands: &mut Commands,
-                                              a: impl Bundle,
-                                              b: impl Bundle,
-                                              c: impl Bundle,
-                                              d: impl Bundle) {
-  commands.spawn(a).with_children(|aa| {
-                     aa.spawn(b).with_children(|bb| {
-                                  bb.spawn(c).with_children(|cc| {
-                                               cc.spawn(d);
-                                             });
-                                });
-                   });
-}
-pub fn spawn_with_2_children(commands: &mut Commands,
-                             a: impl Bundle,
-                             b: impl Bundle,
-                             c: impl Bundle) {
-  commands.spawn(a).with_children(|x| {
-                     x.spawn(b);
-                     x.spawn(c);
-                   });
 }
 pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   macro_rules! spawn {
@@ -112,15 +65,19 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
       c.spawn($bundle);
     }};
     ($bundle1:expr,$bundle2:expr) => {{
-      c.spawn($bundle1).with_children(|x| {
-                         x.spawn($bundle2);
-                       });
+      $bundle1.with_child($bundle2).spawn(&mut c);
+      // c.spawn($bundle1).with_children(|x| {
+      //                    x.spawn($bundle2);
+      //                  });
     }};
     ($bundle1:expr,$bundle2:expr,$bundle3:expr) => {{
-      c.spawn($bundle1).with_children(|x| {
-                         x.spawn($bundle2);
-                         x.spawn($bundle3);
-                       });
+      $bundle1.with_child($bundle2)
+              .with_child($bundle3)
+              .spawn(&mut c);
+      // c.spawn($bundle1).with_children(|x| {
+      //                    x.spawn($bundle2);
+      //                    x.spawn($bundle3);
+      //                  });
     }};
   }
   let text_style = TextStyle { font_size: 30.0,
@@ -218,15 +175,15 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                         transform: Transform::from_xyz(40.0, -10.0, -40.0),
                         ..default() }));
   let glowy_sphere = |transform| {
-    (PointLightBundle { transform,
+    PointLightBundle { transform,
                         point_light: PointLight { intensity: 4_00_000.0,
                                                   radius: 1.0,
                                                   // range: 100.0,
                                                   shadows_enabled: true,
                                                   color: GLOWY_COLOR,
                                                   ..default() },
-                        ..default() },
-     (PbrBundle { mesh: amah.sphere.clone(),
+                        ..default() }
+    .with_child((PbrBundle { mesh: amah.sphere.clone(),
                   material: amah.glowy_material.clone(),
                   ..default() },
       NotShadowCaster,
@@ -235,8 +192,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
       Velocity::default(),
       AsyncCollider(ComputedColliderShape::ConvexHull)))
   };
-  let (light, sphere) = glowy_sphere(Transform::from_xyz(22.709263, -26.007673, 72.32278));
-  spawn!(light, sphere);
+  glowy_sphere(Transform::from_xyz(22.709263, -26.007673, 72.32278)).spawn(&mut c);
   spawn!((RigidBody::Fixed,
           // Friction::new(0.1),
           AsyncSceneCollider { shape: Some(ComputedColliderShape::TriMesh),
@@ -283,6 +239,8 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
                               cursor_lock_toggle_enabled: true,
                               cursor_lock_active: false,
+                              offset_enabled: true,
+                              offset: Offset::new(0.0, 0.5),
                               mouse_sensitivity: 1.7,
                               zoom: bevy_third_person_camera::Zoom::new(1.2, 13.0),
                               zoom_sensitivity: 0.1,
@@ -316,7 +274,6 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                    transform,
                    ..default() })
     };
-    // SpotLightBundle
     match tile {
       'w' => spawn!(block(amah.funky_material.clone())),
       'g' => spawn!(block(amah.grass_material.clone())),
@@ -394,35 +351,28 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                          up_down_steps: default(),
                                          up_down_distance: 0.3 })),
       'F' => {
-        let (b1, b2) = flashlight(Transform::from_scale(Vec3::splat(0.08)), &amah);
-        spawn_with_child_with_child_with_child(
-          &mut c,
-          (ItemPickUp::GetFlashLight,
-           SceneBundle { transform,
-                         ..default() }),
-          (SceneBundle::default(),
-           SpinningAnimation {
-             rotation_steps: default(),
-             up_down_steps: default(),
-             up_down_distance: 0.2 }),
-          b1,b2
-          // (VoxelSceneBundle {
-          //   scene: amah.flashlight.clone(),
-          //   transform:
-          //   Transform::from_scale(Vec3::splat(0.08)),
-          //   ..default() },
-          //  NotShadowCaster,
-          //  NotShadowReceiver,
-          // ),
-          // SpotLightBundle {
-          //   spot_light: SpotLight{ shadows_enabled:true,
-          //                          range:40.0,
-          //                          outer_angle: PI * 0.2,
-          //                          ..default() },
-          //   transform: Transform::from_translation(Vec3::NEG_Z * 3.0),
-          //   ..default()
-          // }
-        );
+        (ItemPickUp::GetFlashLight,
+          SceneBundle { transform,
+                        ..default() })
+          .with_child((SceneBundle::default(),
+                       SpinningAnimation { rotation_steps: default(),
+                                           up_down_steps: default(),
+                                           up_down_distance: 0.2 })
+                    .with_child(flashlight(Transform::from_scale(Vec3::splat(0.08)),
+                                          &amah)))
+
+              .spawn(&mut c);
+      }
+      'H' => {
+        SceneBundle { transform,
+                      ..default() }
+        .with_child((VoxelSceneBundle { scene: amah.glowtest.clone(),
+                                        transform: Transform::from_scale(Vec3::splat(0.1)),
+                                        ..default() },
+                     SpinningAnimation { rotation_steps: default(),
+                                         up_down_steps: default(),
+                                         up_down_distance: 0.2 }))
+        .spawn(&mut c);
       }
       'L' => spawn!((RigidBody::Dynamic,
                      ColliderMassProperties::Density(1.0),
@@ -434,24 +384,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                    transform,
                                    ..default() })),
       'l' => {
-        let (light, sphere) = glowy_sphere(transform);
-        spawn!(light, sphere);
-        // spawn!(PointLightBundle { transform,
-        //                           point_light: PointLight { intensity: 400.0,
-        //                                                     radius: 1.0,
-        //                                                     // range: 100.0,
-        //                                                     shadows_enabled: true,
-        //                                                     color: GLOWY_COLOR,
-        //                                                     ..default() },
-        //                           ..default() },
-        //        (PbrBundle { mesh: amah.uvsphere.clone(),
-        //                     material: amah.glowy_material.clone(),
-        //                     ..default() },
-        //         NotShadowCaster,
-        //         RigidBody::Fixed,
-        //         Friction::default(),
-        //         Velocity::default(),
-        //         AsyncCollider(ComputedColliderShape::ConvexHull)))
+        glowy_sphere(transform).spawn(&mut c);
       }
       'd' => {
         spawn!((RigidBody::Dynamic,

@@ -1,9 +1,4 @@
-use {crate::assetstuff::AllMyAssetHandles,
-     bevy::{pbr::{NotShadowCaster, NotShadowReceiver},
-            prelude::*},
-     bevy_vox_scene::VoxelSceneBundle,
-     rust_utils::comment,
-     std::f32::consts::PI};
+use bevy::prelude::*;
 
 pub trait BundleTree: Sized {
   fn spawn(self, c: &mut Commands) -> Entity;
@@ -11,8 +6,7 @@ pub trait BundleTree: Sized {
     let childe = self.spawn(c);
     c.entity(parent).add_child(childe);
   }
-  fn with_child(self, child: impl BundleTree) -> impl BundleTree
-    where Self: Sized {
+  fn with_child(self, child: impl BundleTree) -> impl BundleTree {
     BundleTreeStruct(|c: &mut Commands| {
       let parente = self.spawn(c);
       let childe = child.spawn(c);

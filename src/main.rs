@@ -5,6 +5,7 @@
 // #![feature(type_alias_impl_trait)]
 #![allow(unused_mut)]
 #![allow(non_camel_case_types)]
+// #![recursion_limit = "1024"]
 // #![feature(const_fn_floating_point_arithmetic)]
 
 use {bevy::{prelude::*, window},
@@ -12,6 +13,7 @@ use {bevy::{prelude::*, window},
      bevy_third_person_camera::ThirdPersonCameraPlugin};
 
 pub mod assetstuff;
+pub mod bundletree;
 pub mod components;
 // pub mod dungeon;
 pub mod input;

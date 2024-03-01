@@ -1,5 +1,7 @@
 use std::fmt::Debug;
 
+use bevy::core_pipeline::bloom::{BloomCompositeMode, BloomPrefilterSettings, BloomSettings};
+
 use {bevy::window::{CursorGrabMode, PrimaryWindow},
      bevy_vox_scene::VoxelSceneBundle};
 
@@ -25,7 +27,9 @@ pub fn debugfmt(t: impl Debug) -> String { format!("{:?}", t) }
 fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>,
                   mouse_button_input: Res<ButtonInput<MouseButton>>,
                   mut window_q: Query<&mut Window, With<PrimaryWindow>>,
-                  mut cam_q: Query<&mut ThirdPersonCamera>,
+                  mut cam_q: Query<(Entity,
+                         &mut ThirdPersonCamera,
+                         Option<&BloomSettings>)>,
                   amah: Res<AllMyAssetHandles>,
                   mut c: Commands,
                   mut playerq: Query<&Transform, With<Player>>) {
@@ -36,6 +40,7 @@ fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>,
   }
   if keyboard_input.just_pressed(KeyCode::KeyL) {
     if let Ok(&player_transform) = playerq.get_single() {
+      c.spawn(message(debugfmt(player_transform), player_transform.translation));
       // c.spawn(VoxelSceneBundle { scene: amah.flashlight.clone(),
       //                              transform:
       //                                player_transform,
@@ -51,9 +56,23 @@ fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>,
       }
     }
   }
-  if let Ok(mut cam) = cam_q.get_single_mut() {
+  if let Ok((cam_e, mut cam, obs)) = cam_q.get_single_mut() {
     if mouse_button_input.just_pressed(MouseButton::Left) {
       cam.cursor_lock_active = !cam.cursor_lock_active;
+    }
+    if keyboard_input.just_pressed(KeyCode::KeyT) {
+      if obs.is_some() {
+        c.entity(cam_e).remove::<BloomSettings>();
+      } else {
+        c.entity(cam_e).insert(BloomSettings { intensity: 0.5,
+                                               low_frequency_boost: 0.0,
+                                               prefilter_settings:
+                                                 BloomPrefilterSettings { threshold: 2.2,
+                                                                          ..default() },
+                                               composite_mode:
+                                                 BloomCompositeMode::Additive,
+                                               ..default() });
+      }
     }
   }
   // let dir =
