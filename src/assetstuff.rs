@@ -84,6 +84,7 @@ pub struct AllMyAssetHandles {
   pub stickman: Handle<Image>,
   pub skybox: Handle<Image>,
   pub sun: Handle<Image>,
+  pub fire: Handle<Image>,
   pub coffee: Handle<Image>,
   pub coffee_scene: Handle<Scene>,
   pub flashlight: Handle<VoxelScene>,
@@ -134,20 +135,16 @@ impl Plugin for AssetStuffPlugin {
       turtle_level, "turtle level.gltf", "Scene0"
       flashlight, "flashlight.vox", "flashlight"
     }
-    // VoxelScene
     asset_paths! {
       stone, "stone.png"
       skybox, "skybox.png"
       sun, "sun.png"
+      fire, "fire.png"
       iceberg, "iceberg.png"
       coffee, "coffee.png"
       stickman, "stickman.png"
       flower, "flower.vox"
       glowtest, "glowtest.vox"
-
-      // flashlight, "flashlight.vox"
-      // alevel, "alevel.gltf"
-      // alevel, "alevel.obj"
       grass, "grass.png"
       water, "water.png"
       tree, "tree.png"
@@ -216,6 +213,14 @@ impl Plugin for AssetStuffPlugin {
       particle_material, colmat(Color::rgb(0.2, 0.7, 0.9))
 
     }
+
+    // Sprite3d::bundle_with_atlas()
+    // AtlasSprite3dBundle
+    // let texture = fire.clone();
+    // let layout = TextureAtlasLayout::from_grid(Vec2::new(16.0, 12.0), 4, 1, None, None);
+    // let atlas = TextureAtlas::texture_rect
+    // let mut texture_atlas_layouts = app.world.resource_mut::<Assets<TextureAtlasLayout>>();
+    // let layout_handle = texture_atlas_layouts.add(layout);
     // UNIT_SQUARE.set(unitsquare).unwrap();
     app.insert_resource(amah);
   }

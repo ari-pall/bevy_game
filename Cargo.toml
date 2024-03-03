@@ -26,7 +26,7 @@ exclude = [
 # opt-level = 3
 
 [profile]
-dev = {package."*" = {opt-level = 1}, opt-level = 1}
+dev = {package."*" = {opt-level = 3}, opt-level = 1}
 release = {lto = "fat", codegen-units = 1, opt-level = 3}
 # wasm-release = {inherits = "release", lto = true, codegen-units = 1,opt-level = 3}
 # The profile that 'cargo dist' will build with
@@ -80,3 +80,4 @@ iter-comprehensions = "*"
 bevy_mod_billboard = { git = "https://github.com/kulkalkul/bevy_mod_billboard", rev = "1fabd2214731dedb4b17ce0a0894d22182707759" }
 
 bevy_vox_scene ={git = "https://github.com/Utsira/bevy_vox_scene", rev = "01606eb983ea8e7d039323fd3900f9d796993b8e"}
+bevy_sprite3d = "2.8.0"

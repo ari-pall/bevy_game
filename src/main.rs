@@ -10,7 +10,8 @@
 
 use {bevy::{prelude::*, window},
      bevy_rapier3d::prelude::NoUserData,
-     bevy_third_person_camera::ThirdPersonCameraPlugin};
+     bevy_third_person_camera::ThirdPersonCameraPlugin,
+     update::TimeTicks};
 
 pub mod assetstuff;
 pub mod bundletree;
@@ -21,31 +22,9 @@ pub mod jumpy_penguin;
 pub mod setup;
 pub mod state;
 pub mod update;
-// pub mod game;
-// pub mod gamething;
-// pub mod tests;
-// pub mod input;
-// pub mod gol;
-// pub mod game2d;
-// pub mod dynamic_character_3d;
-// pub mod examples_common_3d;
-// pub mod camera;
-// pub mod kinematic_character_3d;
-// pub mod physics;
-// pub mod lunarlander3d;
-// pub mod tiles;
-// // mod audio;
-// // mod menu;
-// pub mod loading;
-// pub mod lunarlander3d;
-// pub mod menu;
-// impl<F: FnOnce(&mut App)> Plugin for F {
-//   fn build(&self, app: &mut App) { self.call_once(app); }
-// }
 #[bevy_main]
 pub fn main() {
   App::new()
-    .init_resource::<state::StateStuff>()
     .add_plugins((
       // bevy::pbr::ScreenSpaceAmbientOcclusionPlugin
       DefaultPlugins
@@ -59,6 +38,7 @@ pub fn main() {
           }),
           ..default()
         }),
+      bevy_sprite3d::Sprite3dPlugin,
       // bevy_obj::ObjPlugin,
       // bevy_vox::VoxPlugin::default(),
       bevy_vox_scene::VoxScenePlugin,
@@ -68,6 +48,9 @@ pub fn main() {
       bevy_rapier3d::prelude::RapierPhysicsPlugin::<NoUserData>::default(),
       input::MyInputPlugin,
     ))
+    .init_resource::<TimeTicks>()
+
+
 // .init_asset::<bevy_vox_scene::scene::VoxelScene>()
     // .insert_resource(AmbientLight{ color: Color::ALICE_BLUE, brightness: 0.2 })
     // .insert_resource(bevy_xpbd_3d::resources::SubstepCount(2))
@@ -84,6 +67,11 @@ pub fn main() {
         update::spinning_animation,
         update::sun_movement,
         update::show_message,
+        update::crazy_cubes,
+        update::gib_billboard,
+        update::gib_animated_billboard,
+        update::increment_time,
+        update::timed_animation_system,
         bevy::window::close_on_esc,
         jumpy_penguin::segment_path_motion,
       ),

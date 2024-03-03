@@ -1,9 +1,10 @@
 use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_COLOR_3},
              bundletree::BundleTree,
              components::{name, FaceCamera, IsPlayerSprite, ItemPickUp, Player,
-                          SpinningAnimation, Sun},
+                          SpinningAnimation, Sun, TimedAnimation},
              jumpy_penguin::SegmentPathMotion,
-             update::{capsule_from_height_and_radius, PLAYER_HEIGHT, PLAYER_RADIUS}},
+             update::{capsule_from_height_and_radius, AnimatedBillboard, Billboard,
+                      PLAYER_HEIGHT, PLAYER_RADIUS}},
      bevy::{core_pipeline::{self,
                             bloom::{BloomCompositeMode, BloomPrefilterSettings,
                                     BloomSettings}},
@@ -20,22 +21,28 @@ use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_C
      rust_utils::comment,
      std::f32::consts::PI};
 
-pub fn billboard(transform: Transform,
-                 image_handle: Handle<Image>,
-                 amah: &Res<AllMyAssetHandles>)
-                 -> impl Bundle {
-  BillboardLockAxisBundle { billboard_bundle:
-                              BillboardTextureBundle { transform,
-                                                       texture:
-                                                         BillboardTextureHandle(image_handle),
-                                                       mesh:
-                                                         BillboardMeshHandle(amah.unitsquare
-                                                                                 .clone()),
-                                                       billboard_depth:
-                                                         BillboardDepth(true),
-                                                       ..default() },
-                            lock_axis: BillboardLockAxis { y_axis: true,
-                                                           rotation: true } }
+// pub fn billboard(transform: Transform,
+//                  image_handle: Handle<Image>,
+//                  amah: &Res<AllMyAssetHandles>)
+//                  -> impl Bundle {
+//   bevy_sprite3d::Sprite3dBundle{ params: todo!(), pbr: todo!() }
+//   BillboardLockAxisBundle { billboard_bundle:
+//                               BillboardTextureBundle { transform,
+//                                                        texture:
+//                                                          BillboardTextureHandle(image_handle),
+//                                                        mesh:
+//                                                          BillboardMeshHandle(amah.unitsquare
+//                                                                                  .clone()),
+//                                                        billboard_depth:
+//                                                          BillboardDepth(true),
+//                                                        ..default() },
+//                             lock_axis: BillboardLockAxis { y_axis: true,
+//                                                            rotation: true } }
+// }
+pub fn billboard(transform: Transform, image_handle: Handle<Image>) -> Billboard {
+  Billboard { transform,
+              image_handle,
+              unlit: false }
 }
 
 pub fn flashlight(transform: Transform, amah: &Res<AllMyAssetHandles>) -> impl BundleTree {
@@ -55,6 +62,14 @@ pub fn flashlight(transform: Transform, amah: &Res<AllMyAssetHandles>) -> impl B
                                                                                  * 3.0),
                                                    ..default() })
 }
+pub const FIRE_ANIM_LENGTH: usize = 4;
+pub const BLOOM_SETTINGS: BloomSettings =
+  BloomSettings { intensity: 0.5,
+                  low_frequency_boost: 0.0,
+                  prefilter_settings: BloomPrefilterSettings { threshold: 2.2,
+                                                               threshold_softness: 0.0 },
+                  composite_mode: BloomCompositeMode::Additive,
+                  ..BloomSettings::NATURAL };
 pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   macro_rules! spawn {
     ($bundle:expr) => {{
@@ -127,8 +142,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   spawn!(up_down_iceberg(vec3(12.84221, -6.0, -4.947112), 4.0, 0.3));
   spawn!((FaceCamera,
           billboard(Transform::from_xyz(-30.0, 0.0, -40.0).with_scale(Vec3::splat(7.0)),
-                    amah.iceberg.clone(),
-                    &amah)));
+                    amah.iceberg.clone())));
   // GibSpriteBundle(Sprite3d { image: amah.iceberg.clone(),
   //          transform: Transform::from_xyz(-30.0, 0.0, -40.0),
   //          pixels_per_metre: 1.5,
@@ -165,21 +179,21 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                         ..default() }));
   let glowy_sphere = |transform| {
     PointLightBundle { transform,
-                        point_light: PointLight { intensity: 4_00_000.0,
-                                                  radius: 1.0,
-                                                  // range: 100.0,
-                                                  shadows_enabled: true,
-                                                  color: GLOWY_COLOR,
-                                                  ..default() },
-                        ..default() }
+                       point_light: PointLight { intensity: 4_00_000.0,
+                                                 radius: 1.0,
+                                                 // range: 100.0,
+                                                 shadows_enabled: true,
+                                                 color: GLOWY_COLOR,
+                                                 ..default() },
+                       ..default() }
     .with_child((PbrBundle { mesh: amah.sphere.clone(),
-                  material: amah.glowy_material.clone(),
-                  ..default() },
-      NotShadowCaster,
-      RigidBody::Fixed,
-      Friction::default(),
-      Velocity::default(),
-      AsyncCollider(ComputedColliderShape::ConvexHull)))
+                             material: amah.glowy_material.clone(),
+                             ..default() },
+                 NotShadowCaster,
+                 RigidBody::Fixed,
+                 Friction::default(),
+                 Velocity::default(),
+                 AsyncCollider(ComputedColliderShape::ConvexHull)))
   };
   glowy_sphere(Transform::from_xyz(22.709263, -26.007673, 72.32278)).spawn(&mut c);
   spawn!((RigidBody::Fixed,
@@ -189,10 +203,25 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           SceneBundle { scene: amah.alevel.clone(),
                         transform: Transform::from_xyz(40.0, -30.0, 60.0),
                         ..default() }));
+
+  comment! {
+  let texture_atlas = TextureAtlas { layout: assets.layout.clone(),
+                                     index: 3 };
+    c.spawn(Sprite3d { image: assets.image.clone(),
+                       pixels_per_metre: 32.,
+                       alpha_mode: AlphaMode::Blend,
+                       unlit: true,
+                       transform: Transform::from_xyz(13.0, 3.0, 6.0),
+                       // pivot: Some(Vec2::new(0.5, 0.5)),
+                       ..default() }.bundle_with_atlas(&mut sprite_params, texture_atlas))
+     .insert(AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)));
+  }
   spawn!((Sun::default(),
-          billboard(Transform::from_scale(Vec3::splat(20.0)),
-                    amah.sun.clone(),
-                    &amah)),
+          Billboard { transform: Transform::from_scale(Vec3::splat(20.0)),
+                      image_handle: amah.sun.clone(),
+                      unlit: true },
+          NotShadowCaster,
+          NotShadowReceiver),
          DirectionalLightBundle { directional_light:
                                     DirectionalLight { color: Color::WHITE,
                                                        illuminance: 11000.0,
@@ -201,6 +230,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                        // shadow_depth_bias: todo!(),
                                                        // shadow_normal_bias: todo!()
                                     },
+                                  transform: Transform::from_scale(Vec3::NEG_ONE),
                                   ..default() });
 
   // ScreenSpaceAmbientOcclusionPlugin
@@ -217,13 +247,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           //               ..default() },
           // UiCameraConfig { show_ui: true },
           // Exposure::OVERCAST,
-          BloomSettings { intensity: 0.5,
-                          low_frequency_boost: 0.0,
-                          prefilter_settings: BloomPrefilterSettings { threshold:
-                                                                         2.2,
-                                                                       ..default() },
-                          composite_mode: BloomCompositeMode::Additive,
-                          ..default() },
+          BLOOM_SETTINGS,
           // Skybox(amah.skybox.clone()),
           ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
                               cursor_lock_toggle_enabled: true,
@@ -303,8 +327,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
         spawn!(SpatialBundle::from_transform(transform),
                (FaceCamera,
                 billboard(Transform::from_scale(Vec3::splat(2.0)),
-                          amah.stickman.clone(),
-                          &amah)));
+                          amah.stickman.clone(),)));
         spawn!((Player::default(),
                 ColliderMassProperties::Mass(player_mass),
                 Friction { combine_rule: CoefficientCombineRule::Multiply,
@@ -323,13 +346,29 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                (IsPlayerSprite,
                 FaceCamera,
                 billboard(Transform::from_scale(Vec3::splat(PLAYER_HEIGHT)),
-                          amah.stickman.clone(),
-                          &amah)))
+                          amah.stickman.clone(),)))
       }
       't' => spawn!((RigidBody::Fixed,
                      capsule_from_height_and_radius(0.8, 0.2),
                      FaceCamera,
-                     billboard(transform, amah.tree.clone(), &amah))),
+                     billboard(transform, amah.tree.clone()))),
+      'f' => {
+        spawn!((FaceCamera,
+                NotShadowCaster,
+                NotShadowReceiver,
+                TimedAnimation { num_frames: FIRE_ANIM_LENGTH,
+                                 time_per_frame_in_ticks: 20 },
+                AnimatedBillboard { transform,
+                                    image_handle: amah.fire.clone(),
+                                    unlit: true,
+                                    num_frames: FIRE_ANIM_LENGTH }),
+               PointLightBundle { point_light: PointLight { intensity: 2_00_000.0,
+                                                            radius: 0.4,
+                                                            shadows_enabled: true,
+                                                            color: GLOWY_COLOR_3,
+                                                            ..default() },
+                                  ..default() })
+      }
       'C' => spawn!((ItemPickUp::SpeedBoost,
                      SceneBundle { transform,
                                    ..default() }),

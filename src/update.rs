@@ -1,12 +1,16 @@
 use {crate::{assetstuff::AllMyAssetHandles,
              bundletree::BundleTree,
              components::{message, FaceCamera, IsPlayerSprite, ItemPickUp, Message,
-                          Player, PlayerFollower, SpinningAnimation, Sun},
+                          Player, PlayerFollower, SpinningAnimation, Sun, TimedAnimation},
              setup::{billboard, flashlight}},
-     bevy::prelude::*,
+     bevy::{math::{vec2, vec3},
+            prelude::*,
+            utils::{HashMap, HashSet}},
      bevy_rapier3d::prelude::*,
-     rust_utils::vec,
-     std::f32::consts::{PI, TAU}};
+     bevy_sprite3d::{AtlasSprite3dBundle, Sprite3d, Sprite3dParams},
+     rust_utils::{pairs, vec},
+     std::{f32::consts::{PI, TAU},
+           ops::Not}};
 fn avg<T: std::iter::Sum + std::ops::Div<f32, Output = T>>(coll: impl IntoIterator<Item = T>)
                                                            -> Option<T> {
   let v = vec(coll);
@@ -133,25 +137,82 @@ pub fn face_camera(camq: Query<&GlobalTransform, With<Camera3d>>,
   if let Ok(cam_globaltransform) = camq.get_single() {
     for (mut transform, globaltransform) in &mut camera_facers_q {
       let dir = Vec3 { y: 0.0,
-                       ..(cam_globaltransform.translation()
-                          - globaltransform.translation()) };
+                       ..(globaltransform.translation()
+                          - cam_globaltransform.translation()) };
       transform.look_to(dir, Vec3::Y);
     }
   }
 }
+#[derive(Component)]
+pub struct Billboard {
+  pub transform: Transform,
+  pub image_handle: Handle<Image>,
+  pub unlit: bool
+}
+pub fn gib_billboard(mut sprite_3d_params: Sprite3dParams,
+                     mut c: Commands,
+                     q: Query<(Entity, &Billboard)>) {
+  for (e,
+       Billboard { transform,
+                   image_handle,
+                   unlit }) in &q
+  {
+    if let Some(image) = sprite_3d_params.images.get(image_handle.clone()) {
+      c.entity(e)
+       .remove::<Billboard>()
+       .insert(Sprite3d { image: image_handle.clone(),
+                          transform: *transform,
+                          pixels_per_metre: image.height() as f32,
+                          double_sided: true,
+                          unlit: *unlit,
+                          ..default() }.bundle(&mut sprite_3d_params));
+    }
+  }
+}
+#[derive(Component)]
+pub struct AnimatedBillboard {
+  pub transform: Transform,
+  pub image_handle: Handle<Image>,
+  pub unlit: bool,
+  pub num_frames: usize
+}
+pub fn gib_animated_billboard(mut sprite_3d_params: Sprite3dParams,
+                              mut c: Commands,
+                              // mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+                              q: Query<(Entity, &AnimatedBillboard)>) {
+  for (e, animated_billboard) in &q {
+    let image_handle = animated_billboard.image_handle.clone();
+    if let Some(image) = sprite_3d_params.images.get(&image_handle) {
+      let &AnimatedBillboard { transform,
+                               unlit,
+                               num_frames,
+                               .. } = animated_billboard;
 
-// pub fn gib_sprite_bundle(mut sprite_3d_params: Sprite3dParams,
-//                          mut c: Commands,
-//                          q: Query<(Entity, &GibSpriteBundle)>) {
-//   for (e, GibSpriteBundle(s)) in &q {
-//     if sprite_3d_params.images.contains(&s.image) {
-//       c.entity(e)
-//        .remove::<GibSpriteBundle>()
-//        .insert(Sprite3d { image: s.image.clone(),
-//                           ..*s }.bundle(&mut sprite_3d_params));
-//     }
-//   }
-// }
+      let image_width = image.width() as f32;
+      let image_height = image.height() as f32;
+      let frame_width = image_width / (num_frames as f32);
+      let texture_atlas_layout_handle =
+        sprite_3d_params.atlas_layouts
+                        .add(TextureAtlasLayout::from_grid(vec2(frame_width, image_height),
+                                                           num_frames,
+                                                           1,
+                                                           None,
+                                                           None));
+      let texture_atlas = TextureAtlas { layout: texture_atlas_layout_handle,
+                                         index: 0 };
+      c.entity(e)
+       .remove::<AnimatedBillboard>()
+       .insert(Sprite3d { image: image_handle,
+                          transform,
+                          // alpha_mode: AlphaMode::Blend,
+                          pixels_per_metre: image.height() as f32,
+                          double_sided: true,
+                          unlit,
+                          ..default() }.bundle_with_atlas(&mut sprite_3d_params,
+                                                          texture_atlas));
+    }
+  }
+}
 pub fn spawn_mushroom_man(playerq: Query<&Transform, With<Player>>,
                           keyboard_input: Res<ButtonInput<KeyCode>>,
                           mut c: Commands,
@@ -172,8 +233,7 @@ pub fn spawn_mushroom_man(playerq: Query<&Transform, With<Player>>,
        SpatialBundle::from_transform(player_transform))
         .with_child((FaceCamera,
                      billboard(Transform::from_scale(Vec3::splat(height * 1.15)),
-                               amah.mushroom_man.clone(),
-                               &amah)))
+                               amah.mushroom_man.clone())))
         .with_child(message("spawned a mushroom man", default()))
         .spawn(&mut c);
     }
@@ -265,7 +325,7 @@ pub fn sun_movement(mut camq: Query<&GlobalTransform, With<Camera3d>>,
                                z: rot_radians.sin() * 100.0 };
     sun_transform.translation = new_sun_pos;
 
-    let dir = cam_pos - new_sun_pos;
+    let dir = new_sun_pos - cam_pos;
     sun_transform.look_to(dir, Vec3::Y);
   }
 }
@@ -277,6 +337,7 @@ pub fn sun_movement(mut camq: Query<&GlobalTransform, With<Camera3d>>,
 //               mut mouse_evr: EventReader<MouseMotion>,
 //               mut scroll_evr: EventReader<MouseWheel>,
 //               mut playerq: Query<&Transform, With<Player>>) {
+//               raycast...
 //   if let Ok(window) = window_q.get_single() {
 //     window.cursor.grab_mode
 // }
@@ -295,3 +356,73 @@ pub fn sun_movement(mut camq: Query<&GlobalTransform, With<Camera3d>>,
 //     }
 //   }
 // }
+
+const CRAZY_CUBES_DIST: i32 = 8;
+#[derive(Default, Resource)]
+pub struct CrazyCubes(pub HashMap<IVec3, Entity>);
+pub fn crazy_cubes(mut c: Commands,
+                   amah: Res<AllMyAssetHandles>,
+                   playerq: Query<&Transform, With<Player>>,
+                   mut cubes: Local<CrazyCubes>) {
+  if let Ok(&Transform { translation: playerpos,
+                         .. }) = playerq.get_single()
+  {
+    let center_cube_pos = IVec3 { x: playerpos.x.round() as i32,
+                                  y: -40,
+                                  z: playerpos.z.round() as i32 };
+    let desired_cube_poses: HashSet<IVec3> =
+      pairs(-CRAZY_CUBES_DIST..=CRAZY_CUBES_DIST,
+            -CRAZY_CUBES_DIST..=CRAZY_CUBES_DIST).filter_map(|(relx, relz)| {
+        let rel_pos = IVec3 { x: relx,
+                              y: 0,
+                              z: relz };
+        let cube_pos = center_cube_pos + rel_pos;
+        (rel_pos.length_squared() <= CRAZY_CUBES_DIST.pow(2)).then_some(cube_pos)
+      })
+      .collect();
+    let to_remove =
+      vec(cubes.0
+               .keys()
+               .filter_map(|&pos| desired_cube_poses.contains(&pos).not().then_some(pos)));
+    let to_add =
+      vec(desired_cube_poses.iter().filter_map(|&pos| {
+                                     cubes.0.contains_key(&pos).not().then_some(pos)
+                                   }));
+    let vec3_from_ivec3 = |IVec3 { x, y, z }| Vec3 { x: x as f32,
+                                                     y: y as f32,
+                                                     z: z as f32 };
+    for pos in to_remove {
+      let e = cubes.0.remove(&pos).unwrap();
+      c.entity(e).despawn();
+    }
+    for pos in to_add {
+      let e = c.spawn((RigidBody::Fixed,
+                       Friction::default(),
+                       Velocity::default(),
+                       AsyncCollider(ComputedColliderShape::ConvexHull),
+                       PbrBundle { mesh: amah.unitcube.clone(),
+                                   material: amah.grass_material.clone(),
+                                   transform:
+                                     Transform::from_translation(vec3_from_ivec3(pos)),
+                                   ..default() }))
+               .id();
+      cubes.0.insert(pos, e);
+    }
+  }
+}
+
+#[derive(Default, Resource)]
+pub struct TimeTicks(pub u32);
+pub fn increment_time(mut time: ResMut<TimeTicks>) { time.0 += 1; }
+pub fn timed_animation_system(time: Res<TimeTicks>,
+                              mut c: Commands,
+                              mut q: Query<(Entity, &TimedAnimation, &mut TextureAtlas)>) {
+  for (e,
+       &TimedAnimation { num_frames,
+                         time_per_frame_in_ticks },
+       mut atlas) in &mut q
+  {
+    let new_index = (time.0 as usize / time_per_frame_in_ticks) % num_frames;
+    atlas.index = new_index;
+  }
+}

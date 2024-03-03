@@ -1,16 +1,13 @@
-use std::fmt::Debug;
+use crate::setup::BLOOM_SETTINGS;
 
-use bevy::core_pipeline::bloom::{BloomCompositeMode, BloomPrefilterSettings, BloomSettings};
-
-use {bevy::window::{CursorGrabMode, PrimaryWindow},
-     bevy_vox_scene::VoxelSceneBundle};
-
-use crate::{assetstuff::AllMyAssetHandles, components::message};
-
-use {crate::components::Player,
-     bevy::prelude::{ButtonInput, KeyCode, Res, *},
+use {crate::{assetstuff::AllMyAssetHandles,
+             components::{message, Player}},
+     bevy::{core_pipeline::bloom::BloomSettings,
+            prelude::{ButtonInput, KeyCode, Res, *},
+            window::{CursorGrabMode, PrimaryWindow}},
      bevy_third_person_camera::ThirdPersonCamera,
-     rust_utils::comment};
+     rust_utils::comment,
+     std::fmt::Debug};
 pub fn debug_println(t: impl core::fmt::Debug) {
   println!("{:?}", t);
 }
@@ -52,7 +49,7 @@ fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>,
       //          );
       if let Ok(mut window) = window_q.get_single_mut() {
         c.spawn(message(debugfmt(window.cursor.grab_mode),
-                        player_transform.translation));
+                        player_transform.translation + Vec3::Y));
       }
     }
   }
@@ -64,14 +61,7 @@ fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>,
       if obs.is_some() {
         c.entity(cam_e).remove::<BloomSettings>();
       } else {
-        c.entity(cam_e).insert(BloomSettings { intensity: 0.5,
-                                               low_frequency_boost: 0.0,
-                                               prefilter_settings:
-                                                 BloomPrefilterSettings { threshold: 2.2,
-                                                                          ..default() },
-                                               composite_mode:
-                                                 BloomCompositeMode::Additive,
-                                               ..default() });
+        c.entity(cam_e).insert(BLOOM_SETTINGS);
       }
     }
   }

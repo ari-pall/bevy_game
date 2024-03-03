@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 pub use bevy::prelude::Name;
 use {bevy::{ecs::system::{SystemParam, SystemState},
             prelude::*,
@@ -124,9 +126,12 @@ pub struct Fire {
 }
 
 #[derive(Component)]
+pub struct TimedAnimation {
+  pub num_frames: usize,
+  pub time_per_frame_in_ticks: usize
+}
+#[derive(Component)]
 pub struct PlayerFollower;
-// #[derive(Component)]
-// pub struct GibSpriteBundle(pub Sprite3d);
 
 // use crate::gamething::Dir;
 
