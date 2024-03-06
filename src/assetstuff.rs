@@ -40,8 +40,6 @@ fn colorful_texture() -> Image {
                   RenderAssetUsages::RENDER_WORLD)
 }
 
-// pub const UNIT_SQUARE: OnceCell<Handle<Mesh>> = OnceCell::new();
-
 pub const GLOWY_COLOR: Color = Color::rgb_linear(13.99, 11.32, 50.0);
 pub const GLOWY_COLOR_2: Color = Color::rgb_linear(10.0, 0.3, 0.0);
 pub const GLOWY_COLOR_3: Color = Color::rgb_linear(0.0, 30.0, 0.0);
@@ -80,6 +78,7 @@ pub struct AllMyAssetHandles {
   pub penguin_image: Handle<Image>,
   pub mushroom_man: Handle<Image>,
   pub tree: Handle<Image>,
+  pub torch: Handle<Image>,
   pub iceberg: Handle<Image>,
   pub stickman: Handle<Image>,
   pub skybox: Handle<Image>,
@@ -90,6 +89,11 @@ pub struct AllMyAssetHandles {
   pub flashlight: Handle<VoxelScene>,
   pub glowtest: Handle<VoxelScene>,
   pub flower: Handle<VoxelScene>,
+  pub chest: Handle<Image>,
+  pub block_textures: Handle<Image>,
+  pub blocks_material: Handle<StandardMaterial>,
+  pub bricks: Handle<Image>,
+  pub bricks_material: Handle<StandardMaterial>,
   pub snow_image: Handle<Image>,
   pub snow_material: Handle<StandardMaterial>,
   pub grass: Handle<Image>,
@@ -137,6 +141,9 @@ impl Plugin for AssetStuffPlugin {
     }
     asset_paths! {
       stone, "stone.png"
+      bricks, "pixelc/bricks.png"
+      chest, "pixelc/chest.png"
+      block_textures, "pixelc/block_textures.png"
       skybox, "skybox.png"
       sun, "sun.png"
       fire, "fire.png"
@@ -153,6 +160,7 @@ impl Plugin for AssetStuffPlugin {
       mushroom_man, "mushroom_man.png"
       wat, "wat.glb"
       character_controller_demo_scene_gltf, "character_controller_demo.glb"
+      torch, "pixelc/torch.png"
     }
 
     StandardMaterial { unlit: true,
@@ -162,7 +170,12 @@ impl Plugin for AssetStuffPlugin {
                                                        ..default() };
     // let colmat = |color: Color| StandardMaterial::from(color);
     let colmat = StandardMaterial::from;
-
+    StandardMaterial { base_color_texture: Some(block_textures.clone()),
+                       perceptual_roughness: 0.8,
+                       reflectance: 0.2,
+                       unlit: false,
+                       opaque_render_method: bevy::pbr::OpaqueRendererMethod::Forward,
+                       ..default() };
     // bevy::math::Rect{ min: vec2(-0.5,-0.5) , max: vec2(0.5,0.5) }
     // bevy::math::primitives::Rectangle::new(1.0,1.0)
     assets! {
@@ -179,6 +192,14 @@ impl Plugin for AssetStuffPlugin {
       colorful_material, StandardMaterial::from(colorful_image.clone())
       funky_image, uv_debug_texture()
       funky_material, imgmat(funky_image.clone())
+        blocks_material, StandardMaterial { base_color_texture:
+                                            Some(block_textures
+                                                 .clone()),
+                                            perceptual_roughness:0.8,
+                                            reflectance:0.2,
+                                            unlit:false,
+                   // opaque_render_method: bevy::pbr::OpaqueRendererMethod::Forward,
+                                            ..default() }
       glowy_material, StandardMaterial { unlit: true,
                                          alpha_mode: AlphaMode::Mask(0.0),
                                          ..GLOWY_COLOR.into() }
@@ -204,6 +225,11 @@ impl Plugin for AssetStuffPlugin {
                                          metallic:0.0,
                                          reflectance:0.3,
                                          ..imgmat(stone.clone())}
+      bricks_material, StandardMaterial { perceptual_roughness:0.95,
+                                         // base_color: Color::GRAY,
+                                         metallic:0.0,
+                                         reflectance:0.1,
+                                         ..bricks.clone().into()}
       grass_material, StandardMaterial { perceptual_roughness:0.8,
                                          base_color: Color::GREEN,
                                          metallic:0.0,

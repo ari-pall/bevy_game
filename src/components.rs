@@ -66,7 +66,7 @@ pub fn message(text: impl Into<String>, origin_pos: Vec3) -> impl Bundle {
    BillboardTextBundle {
      transform: Transform::from_scale(Vec3::splat(0.0)),
      text: Text::from_section(text, TextStyle { font_size: 30.0,
-                                                color: Color::RED,
+                                                color: Color::YELLOW,
                                                 ..default() }).with_justify(JustifyText::Center),
      ..default()
    })
@@ -124,7 +124,6 @@ pub struct Tile {
 pub struct Fire {
   pub dir: (i8, i8)
 }
-
 #[derive(Component)]
 pub struct TimedAnimation {
   pub num_frames: usize,

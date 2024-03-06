@@ -81,3 +81,6 @@ bevy_mod_billboard = { git = "https://github.com/kulkalkul/bevy_mod_billboard", 
 
 bevy_vox_scene ={git = "https://github.com/Utsira/bevy_vox_scene", rev = "01606eb983ea8e7d039323fd3900f9d796993b8e"}
 bevy_sprite3d = "2.8.0"
+
+bevy_meshem ={git = "https://github.com/Adamkob12/bevy_meshem", rev = "37163302e9db919941478d0647803acf527d4dbf"}
+num_enum = "0.7.2"

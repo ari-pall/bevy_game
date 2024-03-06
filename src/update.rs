@@ -178,7 +178,6 @@ pub struct AnimatedBillboard {
 }
 pub fn gib_animated_billboard(mut sprite_3d_params: Sprite3dParams,
                               mut c: Commands,
-                              // mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
                               q: Query<(Entity, &AnimatedBillboard)>) {
   for (e, animated_billboard) in &q {
     let image_handle = animated_billboard.image_handle.clone();
@@ -187,7 +186,6 @@ pub fn gib_animated_billboard(mut sprite_3d_params: Sprite3dParams,
                                unlit,
                                num_frames,
                                .. } = animated_billboard;
-
       let image_width = image.width() as f32;
       let image_height = image.height() as f32;
       let frame_width = image_width / (num_frames as f32);
@@ -205,7 +203,7 @@ pub fn gib_animated_billboard(mut sprite_3d_params: Sprite3dParams,
        .insert(Sprite3d { image: image_handle,
                           transform,
                           // alpha_mode: AlphaMode::Blend,
-                          pixels_per_metre: image.height() as f32,
+                          pixels_per_metre: image_height,
                           double_sided: true,
                           unlit,
                           ..default() }.bundle_with_atlas(&mut sprite_3d_params,
@@ -269,8 +267,8 @@ pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
           }
           ItemPickUp::GetFlashLight => {
             if let Ok(player_sprite) = playerspriteq.get_single() {
-              flashlight(Transform::from_xyz(0.49, 0.25, 0.0).with_scale(Vec3::splat(0.06))
-                                                             .looking_to(Vec3::Z, Vec3::Y),
+              flashlight(Transform::from_xyz(-0.49, 0.25, 0.0).with_scale(Vec3::splat(0.06))
+                                                             .looking_to(Vec3::NEG_Z, Vec3::Y),
                          &amah).spawn_as_child(player_sprite, &mut c);
               c.spawn(message("you found a flashlight", player_transform.translation));
             }
@@ -410,19 +408,23 @@ pub fn crazy_cubes(mut c: Commands,
     }
   }
 }
-
 #[derive(Default, Resource)]
 pub struct TimeTicks(pub u32);
 pub fn increment_time(mut time: ResMut<TimeTicks>) { time.0 += 1; }
-pub fn timed_animation_system(time: Res<TimeTicks>,
-                              mut c: Commands,
-                              mut q: Query<(Entity, &TimedAnimation, &mut TextureAtlas)>) {
-  for (e,
-       &TimedAnimation { num_frames,
+pub fn timed_animation_system(time_ticks: Res<TimeTicks>,
+                              mut q: Query<(&TimedAnimation, &mut TextureAtlas)>) {
+  for (&TimedAnimation { num_frames,
                          time_per_frame_in_ticks },
        mut atlas) in &mut q
   {
-    let new_index = (time.0 as usize / time_per_frame_in_ticks) % num_frames;
-    atlas.index = new_index;
+    let time = time_ticks.0 as usize;
+    let index = |time| (time / time_per_frame_in_ticks) % num_frames;
+    let old_index = index(time.saturating_sub(1));
+    let new_index = index(time);
+    if new_index != old_index {
+      atlas.index = new_index;
+    }
   }
 }
+
+pub fn in_world_ui() {}
