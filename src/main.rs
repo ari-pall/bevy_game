@@ -13,6 +13,7 @@
 use {bevy::{prelude::*, window},
      bevy_rapier3d::prelude::NoUserData,
      bevy_third_person_camera::ThirdPersonCameraPlugin,
+     setup::AMBIENT_LIGHT,
      update::TimeTicks,
      voxels::{voxels_init, MyVoxelRegistry}};
 
@@ -58,11 +59,9 @@ pub fn main() {
 
 
     // .init_asset::<bevy_vox_scene::scene::VoxelScene>()
-    // .insert_resource(AmbientLight{ color: Color::ALICE_BLUE, brightness: 0.2 })
-    // .insert_resource(bevy_xpbd_3d::resources::SubstepCount(2))
+    .insert_resource(AMBIENT_LIGHT)
       .add_systems(Startup, setup::setup)
       .add_systems(Startup, voxels_init)
-    // .add_systems(Startup, voxels::aaa)
       .add_systems(
         Update,
         (

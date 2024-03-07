@@ -1,9 +1,10 @@
-use {crate::{assetstuff::AllMyAssetHandles, setup::level},
+use {crate::{assetstuff::AllMyAssetHandles,
+             components::pick,
+             setup::{level, sphere_full_iter}},
      bevy::{prelude::*, utils::HashMap},
      bevy_meshem::{prelude::{mesh_grid, VoxelMesh, *},
                    Dimensions, VoxelRegistry},
      bevy_rapier3d::geometry::AsyncCollider,
-     bevy_vox_scene::VoxelSceneHookBundle,
      num_enum::TryFromPrimitive,
      rust_utils::comment,
      std::{fmt::Debug, mem::variant_count, ops::IndexMut}};
@@ -129,37 +130,58 @@ struct Meshy {
 fn prob(p: f32) -> bool { p > rand::random::<f32>() }
 #[derive(Component)]
 struct MeshInfo;
-pub fn voxels_init(mvr: Res<MyVoxelRegistry>,
-                   mut c: Commands,
-                   amah: Res<AllMyAssetHandles>,
-                   mut meshes: ResMut<Assets<Mesh>>) {
-  type Chunk = [BlockType; CHUNK_VOLUME];
-  let air_chunk: Chunk = [BlockType::Air; CHUNK_VOLUME];
-  let mut chunks: HashMap<IVec3, Chunk> = HashMap::new();
-  for ([x, y, z], tile) in level() {
-    let block_type = match tile {
-      'g' => BlockType::Grass,
-      's' => BlockType::Snow,
-      'S' => BlockType::Bricks,
-      'k' => BlockType::Rocks,
-      _ => BlockType::Air
-    };
+type Chunk = [BlockType; CHUNK_VOLUME];
+const AIR_CHUNK: Chunk = [BlockType::Air; CHUNK_VOLUME];
+fn spawn_blocks(chunks: &mut HashMap<IVec3, Chunk>,
+                level: impl Iterator<Item = (IVec3, BlockType)>) {
+  for (IVec3 { x, y, z }, block_type) in level {
     if block_type != BlockType::Air {
-      let chunk_id = IVec3::new((x / CHUNK_SIDE_LENGTH) as i32,
-                                (y / CHUNK_SIDE_LENGTH) as i32,
-                                (z / CHUNK_SIDE_LENGTH) as i32);
-      let x_within = x % CHUNK_SIDE_LENGTH;
-      let y_within = y % CHUNK_SIDE_LENGTH;
-      let z_within = z % CHUNK_SIDE_LENGTH;
+      let chunk_id = IVec3::new(x / CHUNK_SIDE_LENGTH as i32,
+                                y / CHUNK_SIDE_LENGTH as i32,
+                                z / CHUNK_SIDE_LENGTH as i32);
+      let x_within = x as usize % CHUNK_SIDE_LENGTH;
+      let y_within = y as usize % CHUNK_SIDE_LENGTH;
+      let z_within = z as usize % CHUNK_SIDE_LENGTH;
       let index_within =
-        x_within + z_within * CHUNK_SIDE_LENGTH + y_within * CHUNK_SIDE_LENGTH.pow(2);
+        x_within + z_within * CHUNK_SIDE_LENGTH + y_within * (CHUNK_SIDE_LENGTH).pow(2);
       if chunks.get(&chunk_id) == None {
-        chunks.insert(chunk_id, air_chunk);
+        chunks.insert(chunk_id, AIR_CHUNK);
       }
       chunks.get_mut(&chunk_id).unwrap()[index_within] = block_type;
     }
   }
-
+}
+pub fn voxels_init(mvr: Res<MyVoxelRegistry>,
+                   mut c: Commands,
+                   amah: Res<AllMyAssetHandles>,
+                   mut meshes: ResMut<Assets<Mesh>>) {
+  let mut chunks: HashMap<IVec3, Chunk> = HashMap::new();
+  spawn_blocks(&mut chunks,
+               level().map(|([x, y, z], tile)| {
+                        (IVec3 { x: x as i32,
+                                 y: y as i32,
+                                 z: z as i32 },
+                         match tile {
+                           'g' => BlockType::Grass,
+                           's' => BlockType::Snow,
+                           'S' => BlockType::Bricks,
+                           'k' => BlockType::Rocks,
+                           'j' => BlockType::Stone,
+                           _ => BlockType::Air
+                         })
+                      }));
+  spawn_blocks(&mut chunks,
+               sphere_full_iter(IVec3 { x: -30,
+                                        y: 4,
+                                        z: 30 },
+                                12).map(|pos| {
+                                     (pos,
+                                      pick([BlockType::Grass,
+                                            BlockType::Snow,
+                                            BlockType::Bricks,
+                                            BlockType::Rocks,
+                                            BlockType::Stone]))
+                                   }));
   let dims: Dimensions = (CHUNK_SIDE_LENGTH, CHUNK_SIDE_LENGTH, CHUNK_SIDE_LENGTH);
   let smooth_lighting_params = Some(SmoothLightingParameters { intensity: 0.3,
                                                                max: 0.8,

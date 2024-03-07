@@ -3,11 +3,11 @@ use {crate::{assetstuff::AllMyAssetHandles,
              components::{message, FaceCamera, IsPlayerSprite, ItemPickUp, Message,
                           Player, PlayerFollower, SpinningAnimation, Sun, TimedAnimation},
              setup::{billboard, flashlight}},
-     bevy::{math::{vec2, vec3},
+     bevy::{math::vec2,
             prelude::*,
             utils::{HashMap, HashSet}},
      bevy_rapier3d::prelude::*,
-     bevy_sprite3d::{AtlasSprite3dBundle, Sprite3d, Sprite3dParams},
+     bevy_sprite3d::{Sprite3d, Sprite3dParams},
      rust_utils::{pairs, vec},
      std::{f32::consts::{PI, TAU},
            ops::Not}};
@@ -366,7 +366,7 @@ pub fn crazy_cubes(mut c: Commands,
                          .. }) = playerq.get_single()
   {
     let center_cube_pos = IVec3 { x: playerpos.x.round() as i32,
-                                  y: -40,
+                                  y: -70,
                                   z: playerpos.z.round() as i32 };
     let desired_cube_poses: HashSet<IVec3> =
       pairs(-CRAZY_CUBES_DIST..=CRAZY_CUBES_DIST,
