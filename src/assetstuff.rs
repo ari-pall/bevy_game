@@ -76,6 +76,7 @@ pub struct AllMyAssetHandles {
   pub funky_image: Handle<Image>,
   pub colorful_image: Handle<Image>,
   pub penguin_image: Handle<Image>,
+  pub graytransparentsquare: Handle<Image>,
   pub mushroom_man: Handle<Image>,
   pub tree: Handle<Image>,
   pub torch: Handle<Image>,
@@ -101,7 +102,8 @@ pub struct AllMyAssetHandles {
   pub stone: Handle<Image>,
   pub stone_material: Handle<StandardMaterial>,
   pub water: Handle<Image>,
-  pub water_material: Handle<StandardMaterial>
+  pub water_material: Handle<StandardMaterial>,
+  pub font: Handle<Font>
 }
 pub struct AssetStuffPlugin;
 impl Plugin for AssetStuffPlugin {
@@ -149,6 +151,7 @@ impl Plugin for AssetStuffPlugin {
       fire, "fire.png"
       iceberg, "iceberg.png"
       coffee, "coffee.png"
+      graytransparentsquare, "pixelc/graytransparentsquare.png"
       stickman, "stickman.png"
       flower, "flower.vox"
       glowtest, "glowtest.vox"
@@ -161,6 +164,7 @@ impl Plugin for AssetStuffPlugin {
       wat, "wat.glb"
       character_controller_demo_scene_gltf, "character_controller_demo.glb"
       torch, "pixelc/torch.png"
+      font, "PerfectDOSVGA437Win.ttf"
     }
 
     StandardMaterial { unlit: true,

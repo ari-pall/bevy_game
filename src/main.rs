@@ -6,6 +6,8 @@
 #![allow(unused_mut)]
 #![allow(non_camel_case_types)]
 #![feature(variant_count)]
+#![feature(strict_overflow_ops)]
+#![feature(iter_intersperse)]
 // #![feature(int_roundings)]
 // #![recursion_limit = "1024"]
 // #![feature(const_fn_floating_point_arithmetic)]
@@ -20,6 +22,7 @@ use {bevy::{prelude::*, window},
 pub mod assetstuff;
 pub mod bundletree;
 pub mod components;
+pub mod ui;
 pub mod voxels;
 // pub mod dungeon;
 pub mod input;
@@ -67,6 +70,7 @@ pub fn main() {
         (
           // update::gib_sprite_bundle,
           update::face_camera,
+          update::face_camera_dir,
           update::player_movement,
           update::item_pick_up,
           update::spawn_mushroom_man,
@@ -81,8 +85,13 @@ pub fn main() {
           update::timed_animation_system,
           bevy::window::close_on_esc,
           jumpy_penguin::segment_path_motion,
+          ui::ui_pop_up
         ),
       )
+      // .add_systems(
+      //   Update,
+      // )
+
       .run();
   // .insert_resource(ClearColor(Color::SALMON))
   // .insert_resource(game::generate_level())

@@ -1,13 +1,15 @@
 use {crate::{assetstuff::AllMyAssetHandles,
              components::pick,
-             setup::{level, sphere_full_iter}},
+             setup::{cuboid_full_iter, level, sphere_full_iter}},
      bevy::{prelude::*, utils::HashMap},
      bevy_meshem::{prelude::{mesh_grid, VoxelMesh, *},
                    Dimensions, VoxelRegistry},
      bevy_rapier3d::geometry::AsyncCollider,
      num_enum::TryFromPrimitive,
-     rust_utils::comment,
-     std::{fmt::Debug, mem::variant_count, ops::IndexMut}};
+     rust_utils::{comment, println},
+     std::{fmt::Debug,
+           mem::variant_count,
+           ops::{IndexMut, Rem}}};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, TryFromPrimitive)]
 #[repr(u8)]
@@ -136,12 +138,12 @@ fn spawn_blocks(chunks: &mut HashMap<IVec3, Chunk>,
                 level: impl Iterator<Item = (IVec3, BlockType)>) {
   for (IVec3 { x, y, z }, block_type) in level {
     if block_type != BlockType::Air {
-      let chunk_id = IVec3::new(x / CHUNK_SIDE_LENGTH as i32,
-                                y / CHUNK_SIDE_LENGTH as i32,
-                                z / CHUNK_SIDE_LENGTH as i32);
-      let x_within = x as usize % CHUNK_SIDE_LENGTH;
-      let y_within = y as usize % CHUNK_SIDE_LENGTH;
-      let z_within = z as usize % CHUNK_SIDE_LENGTH;
+      let rem_euclid = |n: i32| n.rem_euclid(CHUNK_SIDE_LENGTH as i32) as usize;
+      let div_euclid = |n: i32| n.div_euclid(CHUNK_SIDE_LENGTH as i32);
+      let chunk_id = IVec3::new(div_euclid(x), div_euclid(y), div_euclid(z));
+      let x_within = rem_euclid(x);
+      let y_within = rem_euclid(y);
+      let z_within = rem_euclid(z);
       let index_within =
         x_within + z_within * CHUNK_SIDE_LENGTH + y_within * (CHUNK_SIDE_LENGTH).pow(2);
       if chunks.get(&chunk_id) == None {
@@ -171,10 +173,10 @@ pub fn voxels_init(mvr: Res<MyVoxelRegistry>,
                          })
                       }));
   spawn_blocks(&mut chunks,
-               sphere_full_iter(IVec3 { x: -30,
+               sphere_full_iter(IVec3 { x: -50,
                                         y: 4,
-                                        z: 30 },
-                                12).map(|pos| {
+                                        z: 50 },
+                                30).map(|pos| {
                                      (pos,
                                       pick([BlockType::Grass,
                                             BlockType::Snow,
@@ -183,11 +185,11 @@ pub fn voxels_init(mvr: Res<MyVoxelRegistry>,
                                             BlockType::Stone]))
                                    }));
   let dims: Dimensions = (CHUNK_SIDE_LENGTH, CHUNK_SIDE_LENGTH, CHUNK_SIDE_LENGTH);
-  let smooth_lighting_params = Some(SmoothLightingParameters { intensity: 0.3,
-                                                               max: 0.8,
-                                                               smoothing: 1.1,
-                                                               apply_at_gen: true });
-  // let smooth_lighting_params = None;
+  // let smooth_lighting_params = Some(SmoothLightingParameters { intensity: 0.3,
+  //                                                              max: 0.8,
+  //                                                              smoothing: 1.1,
+  //                                                              apply_at_gen: true });
+  let smooth_lighting_params = None;
 
   for (chunk_id, chunk) in chunks {
     let chunk_translation = (chunk_id * (CHUNK_SIDE_LENGTH as i32)).as_vec3();
@@ -200,13 +202,14 @@ pub fn voxels_init(mvr: Res<MyVoxelRegistry>,
     let culled_mesh_handle: Handle<Mesh> = meshes.add(culled_mesh.clone());
     let meshy = Meshy { grid: chunk,
                         metadata };
-    c.spawn((PbrBundle { mesh: culled_mesh_handle,
-                         material: amah.blocks_material.clone(),
-                         transform: Transform::from_translation(chunk_translation),
-                         // visibility: Visibility::Hidden,
-                         ..default() },
-             AsyncCollider(bevy_rapier3d::geometry::ComputedColliderShape::TriMesh),
-             meshy));
+    c.spawn((
+      PbrBundle { mesh: culled_mesh_handle,
+                  material: amah.blocks_material.clone(),
+                  transform: Transform::from_translation(chunk_translation),
+                  // visibility: Visibility::Hidden,
+                  ..default() },
+      AsyncCollider(bevy_rapier3d::geometry::ComputedColliderShape::TriMesh) // meshy
+    ));
   }
 }
 

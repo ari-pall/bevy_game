@@ -1,6 +1,8 @@
 use std::time::Duration;
 
+use crate::ui::UiPopup;
 pub use bevy::prelude::Name;
+
 use {bevy::{ecs::system::{SystemParam, SystemState},
             prelude::*,
             text::{Text, TextStyle},
@@ -61,15 +63,23 @@ pub struct Message {
   pub age_ticks: u32,
   pub origin_pos: Vec3
 }
+// pub fn message(text: impl Into<String>, origin_pos: Vec3) -> impl Bundle {
+//   (Message{ age_ticks: 0, origin_pos },
+//    BillboardTextBundle {
+//      transform: Transform::from_scale(Vec3::splat(0.0)),
+//      text: Text::from_section(text, TextStyle { font_size: 30.0,
+//                                                 color: Color::YELLOW,
+//                                                 ..default() }).with_justify(JustifyText::Center),
+//      ..default()
+//    })
+// }
 pub fn message(text: impl Into<String>, origin_pos: Vec3) -> impl Bundle {
-  (Message{ age_ticks: 0, origin_pos },
-   BillboardTextBundle {
-     transform: Transform::from_scale(Vec3::splat(0.0)),
-     text: Text::from_section(text, TextStyle { font_size: 30.0,
-                                                color: Color::YELLOW,
-                                                ..default() }).with_justify(JustifyText::Center),
-     ..default()
-   })
+  (SpatialBundle { transform: Transform::from_scale(Vec3::splat(0.0)),
+                   ..default() },
+   Message { age_ticks: 0,
+             origin_pos },
+   FaceCamera,
+   UiPopup::new([text]))
 }
 #[derive(Component, Clone, Copy)]
 pub enum ItemPickUp {

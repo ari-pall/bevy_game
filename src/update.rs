@@ -2,10 +2,12 @@ use {crate::{assetstuff::AllMyAssetHandles,
              bundletree::BundleTree,
              components::{message, FaceCamera, IsPlayerSprite, ItemPickUp, Message,
                           Player, PlayerFollower, SpinningAnimation, Sun, TimedAnimation},
-             setup::{billboard, flashlight}},
+             setup::{billboard, flashlight},
+             ui::{ui_pop_up, UiPopup}},
      bevy::{math::vec2,
             prelude::*,
             utils::{HashMap, HashSet}},
+     bevy_mod_billboard::BillboardTextBundle,
      bevy_rapier3d::prelude::*,
      bevy_sprite3d::{Sprite3d, Sprite3dParams},
      rust_utils::{pairs, vec},
@@ -144,6 +146,19 @@ pub fn face_camera(camq: Query<&GlobalTransform, With<Camera3d>>,
   }
 }
 #[derive(Component)]
+pub struct FaceCameraDir;
+pub fn face_camera_dir(camq: Query<&Transform, With<Camera3d>>,
+                       mut camera_facers_q: Query<&mut Transform,
+                             (With<FaceCameraDir>,
+                              Without<Camera3d>)>) {
+  if let Ok(cam_transform) = camq.get_single() {
+    for mut transform in &mut camera_facers_q {
+      transform.look_to(cam_transform.back().into(), Vec3::Y);
+    }
+  }
+}
+
+#[derive(Component)]
 pub struct Billboard {
   pub transform: Transform,
   pub image_handle: Handle<Image>,
@@ -226,13 +241,18 @@ pub fn spawn_mushroom_man(playerq: Query<&Transform, With<Player>>,
        ExternalImpulse::default(),
        LockedAxes::ROTATION_LOCKED,
        capsule_from_height_and_radius(height, 0.3),
-       // Collider::capsule_y(0.4, 0.2),
        ColliderMassProperties::Mass(0.1),
        SpatialBundle::from_transform(player_transform))
         .with_child((FaceCamera,
                      billboard(Transform::from_scale(Vec3::splat(height * 1.15)),
                                amah.mushroom_man.clone())))
         .with_child(message("spawned a mushroom man", default()))
+        // .with_child((SpatialBundle{
+        //   transform: Transform::from_translation(Vec3::Y).with_scale(Vec3::splat(0.03)),
+        //   ..default()
+        // },
+        //              UiPopup::new(["some text"]),
+        // ))
         .spawn(&mut c);
     }
   }
@@ -291,19 +311,19 @@ pub fn spinning_animation(mut q: Query<(&mut Transform, &mut SpinningAnimation)>
     sa.up_down_steps.next();
   }
 }
-pub const MESSAGE_SHOW_TIME_TICKS: u32 = 210;
-pub const MESSAGE_RAISE_ALT: f32 = 1.2;
+pub const MESSAGE_SHOW_TIME_TICKS: u32 = 230;
+pub const MESSAGE_RAISE_ALT: f32 = 1.1;
 // pub const MESSAGE_RAISE_TIME_TICKS: u32 = 50;
 pub fn show_message(mut q: Query<(Entity, &mut Transform, &mut Message)>, mut c: Commands) {
   for (e, mut t, mut m) in &mut q {
     if m.age_ticks > MESSAGE_SHOW_TIME_TICKS {
-      c.entity(e).despawn();
+      c.entity(e).despawn_recursive();
     } else {
       let scale =
         (((m.age_ticks as f32) / (MESSAGE_SHOW_TIME_TICKS as f32)) * PI).sin()
                                                                         .powf(0.11);
       t.translation = m.origin_pos + (Vec3::Y * MESSAGE_RAISE_ALT * scale);
-      t.scale = Vec3::splat(0.0085 * scale);
+      t.scale = Vec3::splat(0.012 * scale);
 
       m.age_ticks += 1;
     }

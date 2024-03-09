@@ -3,8 +3,9 @@ use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_C
              components::{name, FaceCamera, IsPlayerSprite, ItemPickUp, Player,
                           SpinningAnimation, Sun, TimedAnimation},
              jumpy_penguin::SegmentPathMotion,
+             ui::{ui_pop_up, UiPopup},
              update::{capsule_from_height_and_radius, AnimatedBillboard, Billboard,
-                      PLAYER_HEIGHT, PLAYER_RADIUS},
+                      FaceCameraDir, PLAYER_HEIGHT, PLAYER_RADIUS},
              voxels::BlockType},
      bevy::{core_pipeline::{self,
                             bloom::{BloomCompositeMode, BloomPrefilterSettings,
@@ -12,7 +13,7 @@ use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_C
             math::vec3,
             pbr::{NotShadowCaster, NotShadowReceiver},
             prelude::*,
-            render::camera::Exposure,
+            render::camera::{Exposure, RenderTarget},
             utils::hashbrown::HashSet},
      bevy_mod_billboard::BillboardTextBundle,
      bevy_rapier3d::prelude::*,
@@ -166,20 +167,34 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
               .spawn(&mut c);
     }};
   }
+
+  spawn!((FaceCamera,
+          SpatialBundle { transform:
+                            Transform::from_xyz(13.0, 2.0, 5.0).with_scale(Vec3::splat(0.03)),
+                          ..default() },
+          UiPopup::new(["some", "text"])));
+  spawn!((FaceCameraDir,
+          SpatialBundle { transform:
+                            Transform::from_xyz(17.0, 2.5, 5.0).with_scale(Vec3::splat(0.02)),
+                          ..default() },
+          UiPopup::new(["╔════╗",
+                        "║some║",
+                        "║    ║",
+                        "║téxt║",
+                        "║    ║",
+                        "║here║",
+                        "╚════╝",])));
   let text_style = TextStyle { font_size: 30.0,
                                ..default() };
   spawn!(TextBundle::from(TextSection::new("z: ".to_string(), text_style.clone())));
+  // DefaultUiCamera
   spawn!(ImageBundle { style: Style { width: Val::Percent(5.0),
                                       height: Val::Percent(7.0),
                                       ..default() },
                        image: UiImage::from(amah.mushroom_man.clone()),
                        ..default() });
-  // spawn!(PointLightBundle { transform: Transform::from_xyz(0.0, -4.0, 0.0),
-  //                           point_light: PointLight { intensity: 2300.0,
-  //                                                     range: 100.0,
-  //                                                     shadows_enabled: true,
-  //                                                     ..default() },
-  //                           ..default() });
+  // RenderTarget
+  // TargetCamera
   let col_text = |color: Color, text: &str| TextSection { value: text.to_string(),
                                                           style:
                                                             TextStyle { font_size: 30.0,
@@ -311,6 +326,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                            tonemapping:
                              core_pipeline::tonemapping::Tonemapping::Reinhard,
                            ..default() },
+          IsDefaultUiCamera,
           BLOOM_SETTINGS,
           // Skybox(amah.skybox.clone()),
           ThirdPersonCamera { cursor_lock_key: KeyCode::Tab,
