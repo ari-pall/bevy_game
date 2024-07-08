@@ -1,3 +1,5 @@
+use bevy::ecs::system::EntityCommands;
+
 use crate::setup::BLOOM_SETTINGS;
 
 use {crate::{assetstuff::AllMyAssetHandles,
@@ -58,10 +60,11 @@ fn keyboard_input(keyboard_input: Res<ButtonInput<KeyCode>>,
       cam.cursor_lock_active = !cam.cursor_lock_active;
     }
     if keyboard_input.just_pressed(KeyCode::KeyT) {
+      let mut e = c.entity(cam_e);
       if obs.is_some() {
-        c.entity(cam_e).remove::<BloomSettings>();
+        e.remove::<BloomSettings>();
       } else {
-        c.entity(cam_e).insert(BLOOM_SETTINGS);
+        e.insert(BLOOM_SETTINGS);
       }
     }
   }

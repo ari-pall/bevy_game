@@ -3,17 +3,16 @@ use {crate::{assetstuff::{AllMyAssetHandles, GLOWY_COLOR, GLOWY_COLOR_2, GLOWY_C
              components::{name, FaceCamera, IsPlayerSprite, ItemPickUp, Player,
                           SpinningAnimation, Sun, TimedAnimation},
              jumpy_penguin::SegmentPathMotion,
-             ui::{ui_pop_up, UiPopup},
+             ui::UiPopup,
              update::{capsule_from_height_and_radius, AnimatedBillboard, Billboard,
-                      FaceCameraDir, PLAYER_HEIGHT, PLAYER_RADIUS},
-             voxels::BlockType},
+                      NumberThing, PLAYER_HEIGHT, PLAYER_RADIUS}},
      bevy::{core_pipeline::{self,
                             bloom::{BloomCompositeMode, BloomPrefilterSettings,
                                     BloomSettings}},
             math::vec3,
             pbr::{NotShadowCaster, NotShadowReceiver},
             prelude::*,
-            render::camera::{Exposure, RenderTarget},
+            render::camera::Exposure,
             utils::hashbrown::HashSet},
      bevy_mod_billboard::BillboardTextBundle,
      bevy_rapier3d::prelude::*,
@@ -94,6 +93,7 @@ pub fn level() -> impl Iterator<Item = ([usize; 3], char)> {
                                                          })
                               })
 }
+pub const TEXT_SCALE: f32 = 0.013;
 pub const ENABLE_SHADOWS_OTHER_THAN_SUN: bool = false;
 pub const AMBIENT_LIGHT: AmbientLight = AmbientLight { color: Color::WHITE,
                                                        brightness: 300.0 };
@@ -135,21 +135,23 @@ pub fn billboard(transform: Transform, image_handle: Handle<Image>) -> Billboard
 }
 
 pub fn flashlight(transform: Transform, amah: &Res<AllMyAssetHandles>) -> impl BundleTree {
-  (VoxelSceneBundle { scene: amah.flashlight.clone(),
+  (VoxelSceneBundle { scene: amah.flashlight(),
                       transform,
                       ..default() },
    NotShadowCaster,
    NotShadowReceiver)
-                     .with_child(SpotLightBundle { spot_light:
-                                                     SpotLight { shadows_enabled: ENABLE_SHADOWS_OTHER_THAN_SUN,
-                                                                 intensity: 2_000_000.0,
-                                                                 range: 5.0,
-                                                                 outer_angle: PI * 0.2,
-                                                                 ..default() },
-                                                   transform:
-                                                     Transform::from_translation(Vec3::NEG_Z
-                                                                                 * 3.0),
-                                                   ..default() })
+    .with_child(
+      SpotLightBundle {
+        spot_light:
+        SpotLight { shadows_enabled: ENABLE_SHADOWS_OTHER_THAN_SUN,
+                    intensity: 2_000_000.0,
+                    range: 5.0,
+                    outer_angle: PI * 0.2,
+                    ..default() },
+        transform:
+        Transform::from_translation(Vec3::NEG_Z
+                                    * 3.0),
+        ..default() })
 }
 pub const FIRE_ANIM_LENGTH: usize = 4;
 pub const TORCH_ANIM_LENGTH: usize = 4;
@@ -168,22 +170,36 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
     }};
   }
 
-  spawn!((FaceCamera,
-          SpatialBundle { transform:
-                            Transform::from_xyz(13.0, 2.0, 5.0).with_scale(Vec3::splat(0.03)),
+  spawn!((SpatialBundle { transform: Transform::from_xyz(13.0, 2.0, 5.0).with_scale(Vec3::splat(TEXT_SCALE)),
                           ..default() },
           UiPopup::new(["some", "text"])));
-  spawn!((FaceCameraDir,
-          SpatialBundle { transform:
-                            Transform::from_xyz(17.0, 2.5, 5.0).with_scale(Vec3::splat(0.02)),
+  spawn!((SpatialBundle { transform: Transform::from_xyz(17.0, 2.5, 5.0).with_scale(Vec3::splat(TEXT_SCALE)),
                           ..default() },
-          UiPopup::new(["╔════╗",
-                        "║some║",
-                        "║    ║",
-                        "║téxt║",
-                        "║    ║",
-                        "║here║",
-                        "╚════╝",])));
+          UiPopup::new(["╔═══════════╗",
+                        "║some  █ █  ║",
+                        "║           ║",
+                        "║téxt █   █ ║",
+                        "║      ███  ║",
+                        "║here       ║",
+                        "╚═══════════╝",])));
+  spawn!((SpatialBundle { transform: Transform::from_xyz(19.0, 2.5, 5.0)
+                          .with_scale(Vec3::splat(TEXT_SCALE)),
+                          ..default() },
+          NumberThing::default(),
+          UiPopup::new(["number"])));
+  // spawn!((SpatialBundle { transform: Transform::from_xyz(20.0, 3.0, 5.0),
+  //                         ..default() },
+  //         crate::maze::Maze::new(&["wwwwwwwwwwwww",
+  //                                  "wp         ww",
+  //                                  "w wwwwwww www",
+  //                                  "w wl      www",
+  //                                  "w wwwwwwwwwww",
+  //                                  "w wwwwwwwwwww",
+  //                                  "w         l w",
+  //                                  "wwwwwwwwwww w",
+  //                                  "wl          w",
+  //                                  "wwwwwwwwwwwww",]),
+  //         UiPopup::new(["aa"])));
   let text_style = TextStyle { font_size: 30.0,
                                ..default() };
   spawn!(TextBundle::from(TextSection::new("z: ".to_string(), text_style.clone())));
@@ -191,7 +207,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   spawn!(ImageBundle { style: Style { width: Val::Percent(5.0),
                                       height: Val::Percent(7.0),
                                       ..default() },
-                       image: UiImage::from(amah.mushroom_man.clone()),
+                       image: UiImage::from(amah.mushroom_man()),
                        ..default() });
   // RenderTarget
   // TargetCamera
@@ -215,8 +231,8 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
      // Velocity::angular(Vec3::Y * ((rand::random::<f32>() - 0.5) * 0.1)),
      Friction::default(),
      AsyncCollider(ComputedColliderShape::ConvexHull),
-     PbrBundle { mesh: amah.flatbox.clone(),
-                 material: amah.snow_material.clone(),
+     PbrBundle { mesh: amah.flatbox(),
+                 material: amah.snow_material(),
                  transform: Transform::from_translation(spm.dest()),
                  ..default() },
      spm)
@@ -239,17 +255,17 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
   spawn!(up_down_iceberg(vec3(12.84221, -6.0, -4.947112), 4.0, 0.3));
   spawn!((FaceCamera,
           billboard(Transform::from_xyz(-30.0, 0.0, -40.0).with_scale(Vec3::splat(7.0)),
-                    amah.iceberg.clone())));
+                    amah.iceberg())));
   spawn!((RigidBody::Fixed,
           AsyncCollider(ComputedColliderShape::ConvexHull),
-          PbrBundle { mesh: amah.planesize50.clone(),
-                      material: amah.water_material.clone(),
+          PbrBundle { mesh: amah.planesize50(),
+                      material: amah.water_material(),
                       transform: Transform::from_xyz(0.0, -6.0, 0.0),
                       ..default() }));
   spawn!((RigidBody::Fixed,
           AsyncSceneCollider { shape: Some(ComputedColliderShape::TriMesh),
                                named_shapes: default() },
-          SceneBundle { scene: amah.island_level_scene.clone(),
+          SceneBundle { scene: amah.island_level_scene(),
                         transform:
                           Transform::from_xyz(10.0, -30.0, -10.0).with_scale(Vec3::ONE
                                                                              * 20.0),
@@ -258,7 +274,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           Friction::new(0.1),
           AsyncSceneCollider { shape: Some(ComputedColliderShape::TriMesh),
                                named_shapes: default() },
-          SceneBundle { scene: amah.some_sketch_level.clone(),
+          SceneBundle { scene: amah.some_sketch_level(),
                         transform:
                           Transform::from_xyz(-30.0, -30.0, 30.0).with_scale(Vec3::ONE
                                                                              * 20.0),
@@ -267,12 +283,12 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           Friction::new(0.1),
           AsyncSceneCollider { shape: Some(ComputedColliderShape::TriMesh),
                                named_shapes: default() },
-          SceneBundle { scene: amah.turtle_level.clone(),
+          SceneBundle { scene: amah.turtle_level(),
                         transform: Transform::from_xyz(40.0, -10.0, -40.0),
                         ..default() }));
   let glowy_sphere = |translation| {
-    (PbrBundle { mesh: amah.sphere.clone(),
-                 material: amah.glowy_material.clone(),
+    (PbrBundle { mesh: amah.sphere(),
+                 material: amah.glowy_material(),
                  transform: Transform::from_translation(translation),
                  ..default() },
                  NotShadowCaster,
@@ -288,13 +304,13 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
           // Friction::new(0.1),
           AsyncSceneCollider { shape: Some(ComputedColliderShape::TriMesh),
                                named_shapes: default() },
-          SceneBundle { scene: amah.alevel.clone(),
+          SceneBundle { scene: amah.alevel(),
                         transform: Transform::from_xyz(40.0, -30.0, 60.0),
                         ..default() }));
 
   spawn!((Sun::default(),
           Billboard { transform: Transform::from_scale(Vec3::splat(20.0)),
-                      image_handle: amah.sun.clone(),
+                      image_handle: amah.sun(),
                       unlit: true },
           NotShadowCaster,
           NotShadowReceiver),
@@ -353,8 +369,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                                                           + (height
                                                                              / 2.0))),
                 FaceCamera),
-               billboard(Transform::from_scale(Vec3::splat(height)),
-                         amah.tree.clone()))
+               billboard(Transform::from_scale(Vec3::splat(height)), amah.tree()))
       }
       'f' => {
         spawn!((FaceCamera,
@@ -363,7 +378,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                 TimedAnimation { num_frames: FIRE_ANIM_LENGTH,
                                  time_per_frame_in_ticks: 20 },
                 AnimatedBillboard { transform,
-                                    image_handle: amah.fire.clone(),
+                                    image_handle: amah.fire(),
                                     unlit: true,
                                     num_frames: FIRE_ANIM_LENGTH }),
                point_light(Vec3::ZERO, 0.4, Intensity::Med, GLOWY_COLOR_3))
@@ -375,15 +390,15 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                 TimedAnimation { num_frames: TORCH_ANIM_LENGTH,
                                  time_per_frame_in_ticks: 20 },
                 AnimatedBillboard { transform,
-                                    image_handle: amah.torch.clone(),
+                                    image_handle: amah.torch(),
                                     unlit: true,
                                     num_frames: TORCH_ANIM_LENGTH }),
                point_light(Vec3::ZERO, 0.4, Intensity::Med, GLOWY_COLOR_2))
       }
-      'C' => spawn!((ItemPickUp::SpeedBoost,
+      'C' => spawn!((ItemPickUp::CoffeCup,
                      SceneBundle { transform,
                                    ..default() }),
-                    (SceneBundle { scene: amah.coffee_scene.clone(),
+                    (SceneBundle { scene: amah.coffee_scene(),
                                    transform: Transform::from_scale(Vec3::splat(0.1)),
                                    ..default() },
                      SpinningAnimation { rotation_steps: default(),
@@ -405,7 +420,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
       'H' => {
         SceneBundle { transform,
                       ..default() }
-        .with_child((VoxelSceneBundle { scene: amah.glowtest.clone(),
+        .with_child((VoxelSceneBundle { scene: amah.glowtest(),
                                         transform: Transform::from_scale(Vec3::splat(0.1)),
                                         ..default() },
                      SpinningAnimation { rotation_steps: default(),
@@ -419,15 +434,15 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                      AsyncSceneCollider { shape:
                                             Some(ComputedColliderShape::ConvexHull),
                                           named_shapes: default() },
-                     SceneBundle { scene: amah.lunarlander.clone(),
+                     SceneBundle { scene: amah.lunarlander(),
                                    transform,
                                    ..default() })),
       'c' => spawn!((RigidBody::Dynamic,
                      ColliderMassProperties::Density(1.0),
                      // MassPropertiesBundle::default(),
                      AsyncCollider(ComputedColliderShape::ConvexHull),
-                     PbrBundle { mesh: amah.cube.clone(),
-                                 material: amah.colorful_material.clone(),
+                     PbrBundle { mesh: amah.cube(),
+                                 material: amah.colorful_material(),
                                  transform,
                                  ..default() })),
       'y' => {
@@ -440,8 +455,8 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                               combine_rule: CoefficientCombineRule::Multiply },
                 // Friction { coefficient: 0.2,
                 //            combine_rule: CoefficientCombineRule::Multiply },
-                PbrBundle { mesh: amah.sphere.clone(),
-                            material: amah.snow_material.clone(),
+                PbrBundle { mesh: amah.sphere(),
+                            material: amah.snow_material(),
                             transform: transform.with_scale(Vec3::splat(0.4)),
                             ..default() }))
       }
@@ -453,8 +468,8 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                 NotShadowCaster,
                 // MassPropertiesBundle::default(),
                 AsyncCollider(ComputedColliderShape::ConvexHull),
-                PbrBundle { mesh: amah.sphere.clone(),
-                            material: amah.glowy_material_2.clone(),
+                PbrBundle { mesh: amah.sphere(),
+                            material: amah.glowy_material_2(),
                             transform: transform.with_scale(Vec3::ONE * 0.4),
                             ..default() }),
                point_light(Vec3::ZERO, 0.4, Intensity::Med, GLOWY_COLOR_2))
@@ -471,8 +486,8 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                               combine_rule: CoefficientCombineRule::Max },
                 Friction { coefficient: 0.2,
                            combine_rule: CoefficientCombineRule::Multiply },
-                PbrBundle { mesh: amah.cube.clone(),
-                            material: amah.glowy_material_3.clone(),
+                PbrBundle { mesh: amah.cube(),
+                            material: amah.glowy_material_3(),
                             transform,
                             ..default() }),
                point_light(Vec3::ZERO, 0.4, Intensity::Med, GLOWY_COLOR_3))
@@ -486,8 +501,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
         let player_mass = 0.3;
         spawn!(SpatialBundle::from_transform(transform),
                (FaceCamera,
-                billboard(Transform::from_scale(Vec3::splat(2.0)),
-                          amah.stickman.clone(),)));
+                billboard(Transform::from_scale(Vec3::splat(2.0)), amah.stickman(),)));
         spawn!((Player::default(),
                 ColliderMassProperties::Mass(player_mass),
                 Friction { combine_rule: CoefficientCombineRule::Multiply,
@@ -506,7 +520,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                (IsPlayerSprite,
                 FaceCamera,
                 billboard(Transform::from_scale(Vec3::splat(PLAYER_HEIGHT)),
-                          amah.stickman.clone(),)))
+                          amah.stickman(),)))
       }
       'o' | ' ' => (),
       _ => () // _ => panic!("{:?}, {tile}", coords),

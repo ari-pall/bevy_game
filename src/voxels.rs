@@ -204,7 +204,7 @@ pub fn voxels_init(mvr: Res<MyVoxelRegistry>,
                         metadata };
     c.spawn((
       PbrBundle { mesh: culled_mesh_handle,
-                  material: amah.blocks_material.clone(),
+                  material: amah.blocks_material(),
                   transform: Transform::from_translation(chunk_translation),
                   // visibility: Visibility::Hidden,
                   ..default() },

@@ -1,4 +1,4 @@
-use {crate::{assetstuff::AllMyAssetHandles, bundletree::BundleTree},
+use {crate::{assetstuff::AllMyAssetHandles, bundletree::BundleTree, update::FaceCameraDir},
      bevy::{math::vec3, prelude::*, render::render_resource::CachedRenderPipelineId,
             text::BreakLineOn},
      bevy_mod_billboard::{text::BillboardTextHandles, BillboardLockAxis,
@@ -6,7 +6,7 @@ use {crate::{assetstuff::AllMyAssetHandles, bundletree::BundleTree},
                           BillboardTextBundle, BillboardTextureBundle,
                           BillboardTextureHandle},
      bevy_vox_scene::{VoxelScene, VoxelSceneBundle},
-     rust_utils::most,
+     rust_utils::{mapv, most},
      std::{f32::consts::PI, ops::Index}};
 
 #[derive(Component)]
@@ -18,7 +18,7 @@ pub struct UiPopup {
 
 impl UiPopup {
   pub fn new<T: Into<String>>(strings: impl IntoIterator<Item = T>) -> Self {
-    Self { strings: strings.into_iter().map(|s| s.into()).collect(),
+    Self { strings: mapv(Into::into, strings),
            foreground_child: None,
            background_child: None }
   }
@@ -32,34 +32,41 @@ pub fn ui_pop_up(mut q: Query<(Entity, &mut UiPopup)>,
                  amah: Res<AllMyAssetHandles>) {
   for (e, mut p) in &mut q {
     if p.is_changed() {
-      let locked_text = |billboard_bundle| {
-        BillboardLockAxisBundle { billboard_bundle,
-                                  lock_axis: BillboardLockAxis { y_axis: true,
-                                                                 rotation: true } }
-      };
       let strings: &Vec<String> = &p.strings;
       let strings_max_len = strings.iter().map(|s| s.chars().count()).max().unwrap_or(0);
       let background_width = strings_max_len as f32 * 1.0;
       let background_height = strings.len() as f32 * 1.0;
       let font_size = 16.0;
       let newline = "\n".to_string();
-      let text = Text::from_sections(strings.iter().intersperse(&newline).map(|s| {
-        TextSection { value: s.to_owned(),
-                      style: TextStyle { font: amah.font.clone(),
-                                         font_size,
-                                         color: Color::WHITE } }
-      }));
-
-      let foreground = locked_text(BillboardTextBundle { text, ..default() });
-      let background = locked_text(BillboardTextBundle {
-        transform: Transform::from_translation(Vec3::Z * 2.0)
-          .with_scale(vec3(background_width,background_height,1.0)),
-        text: Text::from_section("█", TextStyle { font_size,
-                                                  color:
-                                                  Color::hsla(0.0,0.0,0.1,0.7),
-                                                  font: amah.font.clone(),
-                                                  ..default() }),
-        ..default() });
+      let text_style = |color| TextStyle { font: amah.font(),
+                                           font_size,
+                                           color };
+      let locked_text = |billboard_bundle| {
+        BillboardLockAxisBundle { billboard_bundle,
+                                  lock_axis: BillboardLockAxis { y_axis: true,
+                                                                 rotation: true } }
+      };
+      let text =
+        Text::from_sections(strings.iter().intersperse(&newline).map(|s| {
+                                                                  TextSection { value: s.to_owned(),
+                                                          style:
+                                                            text_style(Color::WHITE) }
+                                                                }));
+      let foreground = (FaceCameraDir,
+                        locked_text(BillboardTextBundle { text,
+                                                          transform:
+                                                            Transform::from_scale(vec3(-1.0,
+                                                                                       1.0,
+                                                                                       1.0)),
+                                                          ..default() }));
+      let background =
+        locked_text(BillboardTextBundle {
+             transform: Transform::from_scale(vec3(background_width,
+                                                   background_height,
+                                                   1.0)),
+             text: Text::from_section("█",
+                                      text_style(Color::BLACK.with_a(0.9))),
+             ..default() });
       if let &UiPopup { foreground_child: Some(fe),
                         background_child: Some(be),
                         .. } = p.as_ref()
@@ -70,6 +77,7 @@ pub fn ui_pop_up(mut q: Query<(Entity, &mut UiPopup)>,
         let fe = c.spawn(foreground).id();
         let be = c.spawn(background).id();
         c.entity(e).add_child(fe);
+        // c.entity(e).add_child(be);
         c.entity(fe).add_child(be);
         p.foreground_child = Some(fe);
         p.background_child = Some(be);

@@ -53,7 +53,8 @@ pub struct IsPlayerSprite;
 pub const PLAYER_JUMP_CHARGE_LEVEL_MAX: u32 = 130;
 #[derive(Component, Clone, Debug, Default)]
 pub struct Player {
-  pub speed_boost: f32,
+  // pub speed_boost: f32,
+  pub num_coffee_cups: i32,
   // pub jump_charge_level: u16
   pub jump_charge_level: u32_bounded<PLAYER_JUMP_CHARGE_LEVEL_MAX>
 }
@@ -78,12 +79,12 @@ pub fn message(text: impl Into<String>, origin_pos: Vec3) -> impl Bundle {
                    ..default() },
    Message { age_ticks: 0,
              origin_pos },
-   FaceCamera,
+   // FaceCamera,
    UiPopup::new([text]))
 }
 #[derive(Component, Clone, Copy)]
 pub enum ItemPickUp {
-  SpeedBoost,
+  CoffeeCup,
   GetFlashLight,
   HealthBoost(u32)
 }

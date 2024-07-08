@@ -2,7 +2,7 @@ use {crate::{assetstuff::AllMyAssetHandles,
              bundletree::BundleTree,
              components::{message, FaceCamera, IsPlayerSprite, ItemPickUp, Message,
                           Player, PlayerFollower, SpinningAnimation, Sun, TimedAnimation},
-             setup::{billboard, flashlight},
+             setup::{billboard, flashlight, TEXT_SCALE},
              ui::{ui_pop_up, UiPopup}},
      bevy::{math::vec2,
             prelude::*,
@@ -54,7 +54,8 @@ pub fn player_movement(keyboard_input: Res<ButtonInput<KeyCode>>,
   {
     let player_walk_zone =
       capsule_from_height_and_radius(PLAYER_HEIGHT * 1.02, PLAYER_RADIUS * 1.02);
-    let player_max_speed = PLAYER_MAX_SPEED + player.speed_boost;
+    // let player_max_speed = PLAYER_MAX_SPEED + player.speed_boost;
+    let player_max_speed = PLAYER_MAX_SPEED;
     let mut entities_colliding_with_player = Vec::new();
     rapier_context.intersections_with_shape(
       player_transform.translation,
@@ -153,11 +154,10 @@ pub fn face_camera_dir(camq: Query<&Transform, With<Camera3d>>,
                               Without<Camera3d>)>) {
   if let Ok(cam_transform) = camq.get_single() {
     for mut transform in &mut camera_facers_q {
-      transform.look_to(cam_transform.back().into(), Vec3::Y);
+      transform.look_to(cam_transform.forward().into(), Vec3::Y);
     }
   }
 }
-
 #[derive(Component)]
 pub struct Billboard {
   pub transform: Transform,
@@ -245,7 +245,7 @@ pub fn spawn_mushroom_man(playerq: Query<&Transform, With<Player>>,
        SpatialBundle::from_transform(player_transform))
         .with_child((FaceCamera,
                      billboard(Transform::from_scale(Vec3::splat(height * 1.15)),
-                               amah.mushroom_man.clone())))
+                               amah.mushroom_man())))
         .with_child(message("spawned a mushroom man", default()))
         // .with_child((SpatialBundle{
         //   transform: Transform::from_translation(Vec3::Y).with_scale(Vec3::splat(0.03)),
@@ -282,8 +282,11 @@ pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
       {
         c.entity(item).despawn_recursive();
         match item_pick_up {
-          ItemPickUp::SpeedBoost => {
-            player.speed_boost += SPEEDBOOSTAMOUNT;
+          ItemPickUp::CoffeeCup => {
+            // player.speed_boost += SPEEDBOOSTAMOUNT;
+            player.num_coffee_cups += 1;
+            c.spawn(message(format!("You have {} coffee cups", player.num_coffee_cups)),
+                    player_transform.translation);
           }
           ItemPickUp::GetFlashLight => {
             if let Ok(player_sprite) = playerspriteq.get_single() {
@@ -323,7 +326,7 @@ pub fn show_message(mut q: Query<(Entity, &mut Transform, &mut Message)>, mut c:
         (((m.age_ticks as f32) / (MESSAGE_SHOW_TIME_TICKS as f32)) * PI).sin()
                                                                         .powf(0.11);
       t.translation = m.origin_pos + (Vec3::Y * MESSAGE_RAISE_ALT * scale);
-      t.scale = Vec3::splat(0.012 * scale);
+      t.scale = Vec3::splat(TEXT_SCALE * scale);
 
       m.age_ticks += 1;
     }
@@ -418,8 +421,8 @@ pub fn crazy_cubes(mut c: Commands,
                        Friction::default(),
                        Velocity::default(),
                        AsyncCollider(ComputedColliderShape::ConvexHull),
-                       PbrBundle { mesh: amah.unitcube.clone(),
-                                   material: amah.grass_material.clone(),
+                       PbrBundle { mesh: amah.unitcube(),
+                                   material: amah.grass_material(),
                                    transform:
                                      Transform::from_translation(vec3_from_ivec3(pos)),
                                    ..default() }))
@@ -447,4 +450,24 @@ pub fn timed_animation_system(time_ticks: Res<TimeTicks>,
   }
 }
 
-pub fn in_world_ui() {}
+#[derive(Component, Default)]
+pub struct NumberThing(pub u8);
+pub fn number_thing(mut number_thing_q: Query<(&mut NumberThing,
+                           &mut UiPopup,
+                           &GlobalTransform)>,
+                    mut playerq: Query<&Transform, With<Player>>,
+                    keyboard_input: Res<ButtonInput<KeyCode>>) {
+  if let Ok(&player_transform) = playerq.get_single() {
+    for (mut n, mut p, &t) in &mut number_thing_q {
+      p.strings = vec![" ArrowUp / ArrowDown ".to_string(), n.0.to_string()];
+      if player_transform.translation.distance(t.translation()) < 5.0 {
+        if keyboard_input.just_pressed(KeyCode::ArrowUp) {
+          n.0 = n.0.wrapping_add(1);
+        }
+        if keyboard_input.just_pressed(KeyCode::ArrowDown) {
+          n.0 = n.0.wrapping_sub(1);
+        }
+      }
+    }
+  }
+}

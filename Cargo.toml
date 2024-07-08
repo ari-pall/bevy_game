@@ -1,8 +1,11 @@
 # [build]
 # target = "wasm32-unknown-unknown"
+# target = "x86_64-unknown-linux-gnu"
 # cargo-features = ["per-package-target"]
 [package]
 # default-target = "wasm32-unknown-unknown"
+# default-target = "x86_64-unknown-linux-gnu"
+
 name = "bevy_game"
 version = "0.1.0"
 edition = "2021"
@@ -44,8 +47,8 @@ rust_utils = {path = "../rust_utils"}
 # bevy_third_person_camera = {version = "0.1.8"}
 rand = "*"
 # bevy_sprite3d = "*"
-bevy_rapier3d = {version = "0.25.0", features = ["wasm-bindgen"]}
-bevy = { version = "0.13", default-features = false, features = [
+bevy_rapier3d = {version = "0.26.0", features = ["wasm-bindgen"]}
+bevy = { version = "0.13.2", default-features = false, features = [
     "animation",
     "bevy_asset",
     "bevy_gilrs",
@@ -71,6 +74,7 @@ bevy = { version = "0.13", default-features = false, features = [
     "webgl2",
     # "wayland",
 ] }
+wayland-client = "0.31.3"
 bevy_third_person_camera = "0.1.9"
 iter-comprehensions = "*"
 # bevy-tnua-rapier3d = "*"

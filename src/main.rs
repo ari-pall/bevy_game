@@ -22,6 +22,7 @@ use {bevy::{prelude::*, window},
 pub mod assetstuff;
 pub mod bundletree;
 pub mod components;
+// pub mod maze;
 pub mod ui;
 pub mod voxels;
 // pub mod dungeon;
@@ -51,7 +52,7 @@ pub fn main() {
         // bevy_obj::ObjPlugin,
         // bevy_vox::VoxPlugin::default(),
         bevy_vox_scene::VoxScenePlugin,
-        assetstuff::AssetStuffPlugin,
+        assetstuff::asset_stuff_plugin,
         ThirdPersonCameraPlugin,
         bevy_mod_billboard::prelude::BillboardPlugin,
         bevy_rapier3d::prelude::RapierPhysicsPlugin::<NoUserData>::default(),
@@ -69,8 +70,6 @@ pub fn main() {
         Update,
         (
           // update::gib_sprite_bundle,
-          update::face_camera,
-          update::face_camera_dir,
           update::player_movement,
           update::item_pick_up,
           update::spawn_mushroom_man,
@@ -83,10 +82,13 @@ pub fn main() {
           update::gib_animated_billboard,
           update::increment_time,
           update::timed_animation_system,
+          update::number_thing,
           bevy::window::close_on_esc,
           jumpy_penguin::segment_path_motion,
-          ui::ui_pop_up
-        ),
+          ui::ui_pop_up,
+          update::face_camera,
+          update::face_camera_dir,
+        ).chain(),
       )
       // .add_systems(
       //   Update,
@@ -105,3 +107,5 @@ pub fn main() {
 
 // trunk serve
 // cargo check --target wasm32-unknown-unknown
+// cargo run --target x86_64-unknown-linux-gnu
+// cargo check --target x86_64-unknown-linux-gnu
