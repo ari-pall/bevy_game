@@ -1,27 +1,29 @@
       l
 
 
+                     C
+
+          p                    C
 
 
-          p
-
-
-
+        C
 
                   d
-
+                            C
  SSSSSSSSSSSSSS
  SoooooCooooooS
  SoSooooooooooS
  SooooooooooooS
  SoooooSooooooSkkkkkkkk
  SooooooooooooSkkkkkkkk
- SooooooooooooSkkkkkkkk
+ SooooooooooooSkkkkkkkk         C
  SooooooooooSoSkkkkkkkk
  SooooooooooooSkkkkkkkk
  SSSSSSSSSSSSSSkkkkkkkk
- SSSSSSSSSSSSSS
+ SSSSSSSSSSSSSS            C         C
  SSSSSSSSSSSSSS
  SSSSSSSSSSSSSS
 
  l                          l
+
+C      C         C             C

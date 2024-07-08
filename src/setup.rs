@@ -395,7 +395,7 @@ pub fn setup(mut c: Commands, amah: Res<AllMyAssetHandles>) {
                                     num_frames: TORCH_ANIM_LENGTH }),
                point_light(Vec3::ZERO, 0.4, Intensity::Med, GLOWY_COLOR_2))
       }
-      'C' => spawn!((ItemPickUp::CoffeCup,
+      'C' => spawn!((ItemPickUp::CoffeeCup,
                      SceneBundle { transform,
                                    ..default() }),
                     (SceneBundle { scene: amah.coffee_scene(),

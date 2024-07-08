@@ -267,7 +267,7 @@ pub fn player_follower(mut followerq: Query<(&mut ExternalForce, &Transform),
     }
   }
 }
-const PICKUPDISTANCE: f32 = 0.7;
+const PICKUPDISTANCE: f32 = 1.1;
 const SPEEDBOOSTAMOUNT: f32 = 8.0;
 pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
                     playerspriteq: Query<Entity, With<IsPlayerSprite>>,
@@ -285,8 +285,8 @@ pub fn item_pick_up(mut playerq: Query<(&Transform, &mut Player)>,
           ItemPickUp::CoffeeCup => {
             // player.speed_boost += SPEEDBOOSTAMOUNT;
             player.num_coffee_cups += 1;
-            c.spawn(message(format!("You have {} coffee cups", player.num_coffee_cups)),
-                    player_transform.translation);
+            c.spawn(message(format!("You have {} coffee cups", player.num_coffee_cups),
+                            player_transform.translation));
           }
           ItemPickUp::GetFlashLight => {
             if let Ok(player_sprite) = playerspriteq.get_single() {

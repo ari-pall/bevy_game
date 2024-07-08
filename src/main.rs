@@ -64,6 +64,7 @@ pub fn main() {
 
     // .init_asset::<bevy_vox_scene::scene::VoxelScene>()
     .insert_resource(AMBIENT_LIGHT)
+    .insert_resource(ClearColor(Color::rgb(0.3,0.3,1.0)))
       .add_systems(Startup, setup::setup)
       .add_systems(Startup, voxels_init)
       .add_systems(
@@ -95,7 +96,6 @@ pub fn main() {
       // )
 
       .run();
-  // .insert_resource(ClearColor(Color::SALMON))
   // .insert_resource(game::generate_level())
   // .add_plugin(bevy_fps_controller::controller::FpsControllerPlugin)
   // .add_startup_system(spawn_planets_and_lunar_lander)
